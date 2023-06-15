@@ -15,7 +15,7 @@ export const statistics = createSlice({})
   .computed((slice) => ({
     progress: computed(
       [slice.total, slice.done],
-      (total, done) => Math.round(done * 100) / total,
+      (total, done) => Math.round(done * 100) / (total || 1),
     ),
   }))
   .initialize()

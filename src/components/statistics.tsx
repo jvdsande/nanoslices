@@ -25,7 +25,7 @@ export function Statistics() {
         </Group>
       </Badge>
       <Text lh={1} weight="bold" color="dimmed" size={10}>
-        {progress}%
+        {progress.toFixed(2)}%
       </Text>
     </Group>
   )
