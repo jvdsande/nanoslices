@@ -1,0 +1,23 @@
+{
+  "name": "@nanoslices/core",
+  "version": "0.0.0-rc.9",
+  "description": "Centralized state management wrapper around nanostores",
+  "repository": "https://github.com/jvdsande/nanoslices.git",
+  "author": "Jérémie van der Sande <jeremie.vandersande@gmail.com>",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "build": "tsc"
+  },
+  "peerDependencies": {
+    "nanostores": "^0.9.1"
+  },
+  "devDependencies": {
+    "@redux-devtools/extension": "^3.2.5"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "publishConfig": {
+    "access": "public"
+  }
+}
