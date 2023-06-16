@@ -1,29 +1,18 @@
 import { Store, StoreValue } from 'nanostores'
+import { createDevTools } from './devtools'
+import { crawlObject } from './helpers'
+import { snapshotModel, restoreSnapshot } from './snapshot'
+import { ACTION_SPY, spyOnActions, subscribeToActions } from './spy'
 import {
-  createDevTools,
-  installActionsSpies,
-  prepareSpyHelpers,
-  restoreSnapshot,
-  snapshotModel,
-  subscribeDevTools,
-  subscribeToActions,
-  DEVTOOL,
-} from './devtools'
-
-import {
-  ActionMapper,
-  Actions,
-  ACTIONS,
-  CleanupAtoms,
-  Computed,
-  COMPUTED,
-  DeepPartial,
-  INITIALIZE,
-  MicroStore,
-  SliceBuilder,
-  Slices,
-  State,
   STATE,
+  ACTIONS,
+  COMPUTED,
+  INITIALIZE,
+  ActionMapper,
+  DeepPartial,
+  MicroStore,
+  MicroStoreOptions,
+  Slices,
   StoreMapper,
   StoreSlice,
   StoreValueMapper,
@@ -31,6 +20,7 @@ import {
 
 export type { Slices, StoreMapper, MicroStore } from './types'
 export * from './utils'
+export * from './slice'
 
 const createGetStoreAction = <M extends Slices>(model: ActionMapper<M>) => {
   return <T>(mapper: (model: ActionMapper<M>) => T): T => mapper(model)
@@ -40,206 +30,188 @@ const createGetStoreAtom = <M extends Slices>(model: M) => {
     mapper(model).get()
 }
 
+const loadSliceDevtools = (model: Slices, slices: Slices) => {
+  crawlObject(
+    model,
+    slices,
+    (slice) => ACTION_SPY in slice,
+    (modelSlice, slicesSlice) => {
+      // @ts-expect-error - hidden internal field
+      slicesSlice[ACTION_SPY] = modelSlice[ACTION_SPY]()
+    },
+  )
+}
+
 const loadSlicePart = (
   model: Slices,
-  slice: StoreSlice<any, any, any, any>,
-  path: string[],
-  context: unknown,
-  symbol: typeof STATE | typeof COMPUTED | typeof ACTIONS,
+  slices: Slices,
+  options: {
+    symbol: typeof STATE | typeof COMPUTED | typeof ACTIONS
+    context: unknown
+  },
 ) => {
-  if (!slice) {
-    return
-  }
-  if (slice[symbol]) {
-    // @ts-expect-error - hidden internal field
-    slice[symbol].forEach((apply) => {
-      const part = [STATE, COMPUTED].includes(symbol)
-        ? apply(slice, { context, slices: model })
-        : installActionsSpies(
-            apply(slice, { context, slices: model }),
-            path,
-            slice,
-          )
-      Object.keys(part).forEach((key) => {
-        // @ts-expect-error - expand base slice
-        slice[key] = part[key]
+  crawlObject(
+    model,
+    slices,
+    (modelSlice) => options.symbol in modelSlice,
+    (modelSlice, slice, path) => {
+      // @ts-expect-error - hidden internal field
+      modelSlice[options.symbol].forEach((apply) => {
+        const part =
+          ACTIONS === options.symbol
+            ? spyOnActions(
+                apply(slice, { context: options.context, slices }),
+                path,
+                slice,
+              )
+            : apply(slice, { context: options.context, slices })
+        Object.keys(part).forEach((key) => {
+          slice[key] = part[key]
+        })
       })
-    })
-  } else if (typeof slice === 'object') {
-    Object.keys(slice).forEach((key) => {
-      loadSlicePart(
-        model,
-        (slice as Slices)[key] as StoreSlice<any>,
-        [...path, key],
-        context,
-        symbol,
-      )
-    })
-  }
+    },
+  )
 }
 
 const initialize = (
   model: Slices,
-  slice: StoreSlice<any, any, any, any>,
-  context: unknown,
+  slices: Slices,
+  options: {
+    context: unknown
+  },
 ) => {
-  if (!slice) {
-    return
-  }
-  if (slice[INITIALIZE]) {
-    const init = slice[INITIALIZE]
-    delete slice[INITIALIZE]
-    init(slice, { context, slices: model })
-  } else if (typeof slice === 'object') {
-    Object.keys(slice).forEach((key) => {
-      initialize(model, (slice as Slices)[key] as StoreSlice<any>, context)
-    })
-  }
+  crawlObject(
+    model,
+    slices,
+    (modelSlice) => INITIALIZE in modelSlice,
+    (modelSlice, slices) => {
+      (modelSlice as StoreSlice<any>)[INITIALIZE]?.(slices, {
+        context: options.context,
+        slices,
+      })
+    },
+  )
 }
 
 export const createStore = <M extends Slices, C>(
   model: M,
-  options?: {
+  options?: MicroStoreOptions<M, C>,
+): MicroStore<M, C> => {
+  const internal = { ...options } as {
     name?: string
     devtools?: boolean
     context?: C
-  },
-): MicroStore<M, C> => {
-  const internal = { ...options }
+  }
+  const asStore = {} as StoreSlice<any>
   const asSlice = model as unknown as StoreSlice<any>
 
+  loadSliceDevtools(asSlice, asStore)
+  loadSlicePart(asSlice, asStore, { context: internal?.context, symbol: STATE })
   const load = () => {
-    loadSlicePart(model, asSlice, [], internal?.context, STATE)
-    loadSlicePart(model, asSlice, [], internal?.context, COMPUTED)
-    loadSlicePart(model, asSlice, [], internal?.context, ACTIONS)
+    loadSlicePart(asSlice, asStore, {
+      context: internal?.context,
+      symbol: COMPUTED,
+    })
+    loadSlicePart(asSlice, asStore, {
+      context: internal?.context,
+      symbol: ACTIONS,
+    })
   }
   load()
-  const initialState = snapshotModel(model)
+  const initialState = snapshotModel(asStore)
 
   let connection: ReturnType<typeof createDevTools>
   if (options?.devtools) {
-    connection = createDevTools(options?.name, model)
-    subscribeToActions(asSlice, [], subscribeDevTools(connection))
+    connection = createDevTools(options?.name, asStore)
+    subscribeToActions(asStore, [], connection.subscribe)
   }
 
-  const spy = () => {
-    spy.history = []
-    subscribeToActions(asSlice, [], (slice) => {
+  const spy: MicroStore<M, C>['spy'] = (options) => {
+    const history: { type: string }[] = []
+    subscribeToActions(asStore, [], (slice) => {
       // @ts-expect-error - development hidden field
-      slice[DEVTOOL].subscribe((action) => {
-        spy.history.push(action)
+      slice[ACTION_SPY].subscribe((action) => {
+        history.push(action)
       })
     })
-  }
-  spy.history = [] as { type: string }[]
-  spy.clear = () => {
-    spy.history = []
-  }
-  spy.stop = () => {
-    if (connection) {
-      subscribeToActions(asSlice, [], subscribeDevTools(connection))
-    } else {
-      subscribeToActions(asSlice, [], (slice) => {
-        // @ts-expect-error - development hidden field
-        slice[DEVTOOL].subscribe(() => {
-          // Do nothing
-        })
-      })
+
+    const context = (context: DeepPartial<C>) => {
+      internal.context = context as C
+      load()
+    }
+    const snapshot = (
+      state?: DeepPartial<
+        StoreValueMapper<StoreMapper<M>> extends infer U
+          ? { [key in keyof U]: U[key] }
+          : never
+      >,
+    ) => {
+      restoreSnapshot(asStore, state ?? options?.snapshot ?? initialState)
+      context(options?.context ?? (internal.context as DeepPartial<C>))
+    }
+    const clear = () => {
+      history.length = 0
+    }
+    const reset = () => {
+      snapshot()
+      clear()
+    }
+    const restore = () => {
+      subscribeToActions(asStore, [], connection?.subscribe)
+    }
+
+    options?.reset?.(() => {
+      reset()
+    })
+    options?.restore?.(() => {
+      restore()
+    })
+
+    reset()
+
+    return {
+      history,
+      clear,
+      snapshot,
+      restore,
+      context,
+      reset,
     }
   }
 
+  const extensions: Record<string, any> = {}
+  options?.extensions?.forEach((extension) => {
+    const ext = extension(asStore as unknown as M)
+    Object.keys(ext).forEach((key) => {
+      extensions[key] = ext[key]
+    })
+  })
+
   const store = {
-    act: createGetStoreAction(model as unknown as ActionMapper<M>),
-    get: createGetStoreAtom(model as unknown as StoreMapper<M>),
+    ...extensions,
+    act: createGetStoreAction(asStore as unknown as ActionMapper<M>),
+    get: createGetStoreAtom(asStore as unknown as StoreMapper<M>),
     initialize: () => {
-      initialize(model, asSlice, internal?.context)
+      initialize(asSlice, asStore, { context: internal?.context })
       return store
     },
-    snapshot: () => snapshotModel(model),
-    reset() {
-      restoreSnapshot(model, initialState)
-      connection?.snapshot(initialState)
+    snapshot: () => snapshotModel(asStore),
+    reset(
+      snapshot?: DeepPartial<
+        StoreValueMapper<StoreMapper<M>> extends infer U
+          ? { [key in keyof U]: U[key] }
+          : never
+      >,
+    ) {
+      restoreSnapshot(asStore, snapshot ?? initialState)
+      connection?.snapshot(snapshot ?? initialState)
     },
     setContext(context: C) {
       internal.context = context
       load()
     },
-    setSnapshot(state: DeepPartial<StoreValueMapper<StoreMapper<M>>>) {
-      restoreSnapshot(model, state)
-      connection?.snapshot(state)
-    },
     spy,
-  }
+  } as unknown as MicroStore<M>
 
-  return store as unknown as MicroStore<M>
-}
-
-const createSliceHelpers = <
-  S extends State,
-  C extends Computed = never,
-  A extends Actions = never,
-  Ct = unknown,
->(
-  slice: SliceBuilder<S, C, A, Ct>,
-  helpers: (typeof COMPUTED | typeof ACTIONS)[],
-): SliceBuilder<S, C, A, Ct> => {
-  const next = {
-    ...slice,
-    initialize: (
-      cb: (
-        slice: S,
-        options: { context?: unknown; slices?: unknown },
-      ) => Promise<void>,
-    ) => {
-      // @ts-expect-error - hidden internal field
-      slice[INITIALIZE] = cb
-      return slice
-    },
-  } as unknown as SliceBuilder<S, C, A, Ct>
-
-  if (helpers.includes(ACTIONS)) {
-    // @ts-expect-error - adding helpers when required
-    next.context = () => next
-    // @ts-expect-error - adding helpers when required
-    next.slices = () => next
-  }
-
-  helpers.forEach((helper) => {
-    // @ts-expect-error - adding helpers when required
-    next[helper.description] = (
-      cb: (slice: S, options: { context?: unknown; slices?: unknown }) => C | A,
-    ) =>
-      createSliceHelpers(
-        {
-          ...slice,
-          [helper]: [
-            ...((slice as any)[helper] ?? []),
-            (_slice: S, options: { context: unknown; slices: unknown }) =>
-              cb(_slice, options),
-          ],
-        } as SliceBuilder<S, C, A, Ct>,
-        helper === COMPUTED
-          ? [COMPUTED, ACTIONS]
-          : helper === ACTIONS
-          ? [ACTIONS]
-          : [],
-      )
-  })
-
-  return next
-}
-
-export const createSlice = <
-  S extends State,
-  C extends Computed = never,
-  A extends Actions = never,
-  Context = unknown,
->(
-  state: CleanupAtoms<S>,
-): SliceBuilder<CleanupAtoms<S>, C, A, Context> => {
-  const next = prepareSpyHelpers({
-    [STATE]: [() => state],
-  }) as unknown as SliceBuilder<CleanupAtoms<S>, C, A, Context>
-
-  return createSliceHelpers(next, [ACTIONS, COMPUTED])
+  return store
 }

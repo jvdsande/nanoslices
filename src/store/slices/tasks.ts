@@ -2,7 +2,7 @@ import { computed } from 'nanostores'
 import { persistentMap } from '@nanostores/persistent'
 import { createSlice } from '@nanoslices/core'
 
-export const tasks = createSlice({
+export const tasks = createSlice(() => ({
   tasks: persistentMap<{
     [key: number]: {
       name: string
@@ -24,7 +24,7 @@ export const tasks = createSlice({
       },
     },
   ),
-})
+}))
   .computed((slice) => ({
     flat: computed([slice.tasks], (tasks) =>
       Object.entries(tasks)
@@ -48,4 +48,3 @@ export const tasks = createSlice({
       slice.tasks.set(tasks)
     },
   }))
-  .initialize()

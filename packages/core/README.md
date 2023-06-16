@@ -59,7 +59,6 @@ export const profile = createSlice({
       slice.lastName.set(lastName)
     },
   }))
-  .initialize()
 ```
 
 You can then use your `Slice` to create a `Store`. A `Store` simply takes a map of `Slices`, and turns them into a usable store:
@@ -95,6 +94,7 @@ of the configuration object are optional:
   impacts the store's performances.
 - `context: any`: variable that will be passed to all slice functions (`computed`, `actions` and `initialize`).
   Use it to inject some shared context across your slices, such as API services or configuration.
+- `extensions: Extension[]`: extension system allowing to extend the store with more methods, used by our [React wrapper](https://npmjs.com/@nanoslices/react)
 
 ## Slice methods
 
@@ -116,8 +116,7 @@ Here are the methods available:
   Returns a map of actions that can modify the state. Through `options.slices`, it can compose actions from other slices or
   read other slices' state, and through `options.context` it can access the shared store context.
   Can be chained multiple times to compose actions together.
-- `initialize((slice, options) => T)`: Final method of the slice creator. **Must be called** to create a valid `Slice`. Its argument is optional,
-  and is a callback function with access to the slice and the standard `options` that will be called if `Store.initialize` is called.
+- `initialize((slice, options) => T)`: Receives the current slice and the standard `options`, and is called if `Store.initialize` is called.
   The callback can be used to initialize the slice with asynchronous data in a controlled manner.
 
 ## Store methods
@@ -135,24 +134,38 @@ _Main methods to use to consume the state in an application._
 
 **Advanced methods:**
 
-_Additional methods mostly used for testing or advances use cases._
+_Additional methods used for advances use cases._
 
 - `reset()`: Restore the store to its initial state, before _initialize()_ was called. Restores all the atoms to the default value they were given
-  when creating slices.
+  when creating slices. Can optionally take a snapshot as parameter, applied to the state after reset. The snapshot is a deep partial representation 
+  of the state, and updates all the atoms accordingly with the new value. Note that any value passed to a `computed` store will be ignored, and the actual computed value from other atoms will be used.
 - `snapshot()`: Return a deep representation of the current state as a plain JS object, no atoms.
-- `setSnapshot(snapshot)`: Takes a deep partial representation of the state, and updates all the atoms accordingly with the new value.
-  can be used when testing parts of the application that depends on the state, to bring the state to a controlled, known value easily.
-  Note that any value passed to a `computed` store will be ignored, and the actual computed value from other atoms will be used.
 - `setContext(context)`: Replace the context initially passed in `createStore` with a new value. In TypeScript, the new context type
-  must be compatible with the original context type. For instance, can be used in tests to inject mocks of API services.
-  If you want to pass it a partial representation of the context in a test environment, you can pass the second argument as `true` to
-  tell TypeScript to use partial matching instead of exact matching.
-- `spy()`: Enable spying on action execution. After `spy()` is called, all actions will push an entry into the `spy.history` array.
-  In tests, it becomes possible to read this array to detect if a given action was correctly called with a given payload.
-  In addition to `spy.history`, two methods are available: `spy.clear()` will empty the history, and `spy.stop()` will disable
-  the spy listener. Calling `spy()` always resets the history too.
-  If an action returns a `Promise`, then the spy will automatically listen to it and append a `(success)` action to the history upon success,
-  or a `(fail)` action upon error.
+  must be compatible with the original context type.
+
+**Testing methods:**
+
+_Specific methods used for testing._
+
+- `spy(options)`: Enable spying on action execution, and easily updating the state in a test environment. Returns a `StoreSpy` object
+  complete with useful options for testing. Takes an `options` parameter to configure the testing environment.
+  
+  **Options:**
+  - `reset`: Testing hook in which to reset the state and actions history. Pass it one of your testing framework lifecycle functions such as `beforeEach`.
+  - `restore`: Testing hook in which to restore the state, removing the spy altogether. Pass it one of your testing framework lifecycle functions such as `afterAll`.
+  - `context`: Partial context to set in place of the normal store context, useful for injecting service mocks relevant to the current test suite.
+  - `snapshot`: Partial snapshot of the state to apply when `reset` is called, useful for bringing the state to a relevant value for the current test suite.
+
+  **StoreSpy fields:**
+  - `context(context)`: Takes a new partial context and replace the store context. Useful for injecting mocks relevant to a specific test.
+  - `snapshot(snapshot)`: Takes a partial snapshot and apply it to the store. Useful for bringing the state to a relevant value for a specific test.
+  - `clear()`: Clears all recorded actions, to get back an empty history.
+  - `reset()`: Resets the state to its original state, then applies the snapshot passed as option to `Store.spy()`, if any. Also calls `clear()` internally.
+    Prefer using the `reset` option rather than calling `reset()` yourself.
+  - `restore()`: Restore the state to its original state, and removes the spy completely. Prefer using the `restore` option rather than calling `restore` directly.
+  - `history`: Array containing an entry for each action that have been called since the last `clear()` call. Each action log is an object containing a `type` 
+    field equals to `@action.[path.to.slice].[actionName]` and a `payload` field equals to the `arguments` passed to the action.
+    If an action returns a `Promise`, then an additional entry is added after the `Promise` resolves or rejects. The `type` is the same as the action, with either a `(success)` or `(fail)` suffix.
 
 ## Advanced usage
 
@@ -180,7 +193,6 @@ export const statistics = createSlice({
       (total, done) => Math.round(done * 100) / total,
     ),
   }))
-  .initialize()
 ```
 
 ### Composing actions
@@ -215,7 +227,6 @@ const profile = createSlice({
       slice.setLastName(lastName)
     },
   }))
-  .initialize()
 ```
 
 ### Composing slices
@@ -242,7 +253,6 @@ const profile = createSlice({
       slice.lastName.set(lastName)
     },
   }))
-  .initialize()
 
 const employeeCard = createSlice({
   employeeId: atom(''),
@@ -252,7 +262,6 @@ const employeeCard = createSlice({
   .computed((slice, { slices }) => ({
     employeeName: computed([slices.profile.fullName], (name) => name),
   }))
-  .initialize()
 
 export const Store = createStore({ profile, employeeCard })
 ```
@@ -297,7 +306,6 @@ const employeeCard = createSlice({
       slice.setJob(employee.job)
     },
   }))
-  .initialize()
 ```
 
 ### Initialize a slice

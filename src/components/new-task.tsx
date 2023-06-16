@@ -2,10 +2,10 @@ import { Button, Group, TextInput } from '@mantine/core'
 import { Store } from '../store'
 
 export function NewTask() {
-  const value = Store.use((store) => store.nested.newTask.value)
-  const valid = Store.use((store) => store.nested.newTask.valid)
-  const onChange = Store.act((store) => store.nested.newTask.setValue)
-  const submit = Store.act((store) => store.nested.newTask.submit)
+  const value = Store.use((store) => store.newTask.value)
+  const valid = Store.use((store) => store.newTask.valid)
+  const onChange = Store.act((store) => store.newTask.setValue)
+  const submit = Store.act((store) => store.newTask.submit)
 
   return (
     <form

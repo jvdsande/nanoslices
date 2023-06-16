@@ -3,9 +3,9 @@ import { createSlice, update } from '@nanoslices/core'
 
 import { tasks } from './tasks'
 
-export const newTask = createSlice({
+export const newTask = createSlice(() => ({
   value: atom(''),
-})
+}))
   .slices({ tasks })
   .computed((slice) => ({
     valid: computed(slice.value, (value) => !!value),
@@ -21,4 +21,3 @@ export const newTask = createSlice({
       }
     },
   }))
-  .initialize()

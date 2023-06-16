@@ -5,6 +5,6 @@ import { newTask } from './slices/new-task'
 import { statistics } from './slices/statistics'
 
 export const Store = createStore(
-  { tasks, nested: { newTask }, statistics },
-  { devtools: true },
+  { tasks, newTask, statistics },
+  { devtools: true, name: 'Store' },
 )

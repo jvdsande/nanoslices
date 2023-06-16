@@ -10,10 +10,10 @@ export function App() {
   return (
     <>
       <Global styles={{ body: { background: '#FAFAFA' } }} />
-      <Title size="h2" mx="auto" w="fit-content" mt="10%" mb={16}>
+      <Title size="h2" ta="center" mx="auto" w="fit-content" mt="10%" mb={16}>
         Nanoslices Tasklist
       </Title>
-      <Card withBorder m="auto" w={480}>
+      <Card withBorder m="auto" w="95vw" maw={480}>
         <NewTask />
 
         <Stack mt={24} mb={8}>

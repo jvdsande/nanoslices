@@ -125,86 +125,87 @@ export type SliceBuilder<
   A extends Actions = never,
   Ct = unknown,
   M extends Slices = never,
-> = [C | A] extends [never]
-  ? {
-      initialize: (
-        init?: (
-          slice: S,
-          opts: { context: Ct; slices: ModelMapper<M> },
-        ) => void | Promise<void>,
-      ) => StoreSlice<S, C, A>
-      slices: <_M extends Slices>(slices: _M) => SliceBuilder<S, C, A, Ct, _M>
-      context: <_Ct>() => SliceBuilder<S, C, A, _Ct, M>
-      computed: <_C extends Computed>(
-        extension: (
-          slice: S,
-          opts: { context: Ct; slices: ModelMapper<M> },
-        ) => _C,
-      ) => SliceBuilder<S, _C, A, Ct, M>
-      actions: <_A extends Actions>(
-        extension: (
-          slice: S,
-          opts: { context: Ct; slices: ModelMapper<M> },
-        ) => _A,
-      ) => SliceBuilder<S, C, _A, Ct, M>
-    }
-  : [C] extends [never]
-  ? // In this branch, only "action" has been defined
-    {
-      initialize: (
-        init?: (slice: S & A, context: Ct) => void | Promise<void>,
-      ) => StoreSlice<S, C, A>
-      actions: <_A extends Actions>(
-        extension: (
-          slice: S & A,
-          opts: { context: Ct; slices: ModelMapper<M> },
-        ) => _A,
-      ) => SliceBuilder<S, C, _A & A, Ct, M>
-    }
-  : // In this branch, computed has been defined
-  [A] extends [never]
-  ? // In this branch, only computed has been defined
-    {
-      initialize: (
-        init?: (
-          slice: S & C,
-          opts: { context: Ct; slices: ModelMapper<M> },
-        ) => void | Promise<void>,
-      ) => StoreSlice<S, C, A>
-      computed: <_C extends Computed>(
-        extension: (
-          slice: S & C,
-          opts: { context: Ct; slices: ModelMapper<M> },
-        ) => _C,
-      ) => SliceBuilder<S, _C & C, A, Ct, M>
-      actions: <_A extends Actions>(
-        extension: (
-          slice: S & C,
-          opts: { context: Ct; slices: ModelMapper<M> },
-        ) => _A,
-      ) => SliceBuilder<S, C, _A, Ct, M>
-    }
-  : // In this branch, both have been defined
-    {
-      initialize: (
-        init?: (
-          slice: S & C & A,
-          opts: { context: Ct; slices: ModelMapper<M> },
-        ) => void | Promise<void>,
-      ) => StoreSlice<S, C, A>
-      computed: <_C extends Computed>(
-        extension: (
-          slice: S & C & A,
-          opts: { context: Ct; slices: ModelMapper<M> },
-        ) => _C,
-      ) => SliceBuilder<S, _C & C, A, Ct, M>
-      actions: <_A extends Actions>(
-        extension: (
-          slice: S & C & A,
-          opts: { context: Ct; slices: ModelMapper<M> },
-        ) => _A,
-      ) => SliceBuilder<S, C, _A & A, Ct, M>
-    }
+> = StoreSlice<S, C, A> &
+  ([C | A] extends [never]
+    ? {
+        initialize: (
+          init: (
+            slice: S,
+            opts: { context: Ct; slices: ModelMapper<M> },
+          ) => void | Promise<void>,
+        ) => StoreSlice<S, C, A>
+        slices: <_M extends Slices>(slices: _M) => SliceBuilder<S, C, A, Ct, _M>
+        context: <_Ct>() => SliceBuilder<S, C, A, _Ct, M>
+        computed: <_C extends Computed>(
+          extension: (
+            slice: S,
+            opts: { context: Ct; slices: ModelMapper<M> },
+          ) => _C,
+        ) => SliceBuilder<S, _C, A, Ct, M>
+        actions: <_A extends Actions>(
+          extension: (
+            slice: S,
+            opts: { context: Ct; slices: ModelMapper<M> },
+          ) => _A,
+        ) => SliceBuilder<S, C, _A, Ct, M>
+      }
+    : [C] extends [never]
+    ? // In this branch, only "action" has been defined
+      {
+        initialize: (
+          init: (slice: S & A, context: Ct) => void | Promise<void>,
+        ) => StoreSlice<S, C, A>
+        actions: <_A extends Actions>(
+          extension: (
+            slice: S & A,
+            opts: { context: Ct; slices: ModelMapper<M> },
+          ) => _A,
+        ) => SliceBuilder<S, C, _A & A, Ct, M>
+      }
+    : // In this branch, computed has been defined
+    [A] extends [never]
+    ? // In this branch, only computed has been defined
+      {
+        initialize: (
+          init: (
+            slice: S & C,
+            opts: { context: Ct; slices: ModelMapper<M> },
+          ) => void | Promise<void>,
+        ) => StoreSlice<S, C, A>
+        computed: <_C extends Computed>(
+          extension: (
+            slice: S & C,
+            opts: { context: Ct; slices: ModelMapper<M> },
+          ) => _C,
+        ) => SliceBuilder<S, _C & C, A, Ct, M>
+        actions: <_A extends Actions>(
+          extension: (
+            slice: S & C,
+            opts: { context: Ct; slices: ModelMapper<M> },
+          ) => _A,
+        ) => SliceBuilder<S, C, _A, Ct, M>
+      }
+    : // In this branch, both have been defined
+      {
+        initialize: (
+          init: (
+            slice: S & C & A,
+            opts: { context: Ct; slices: ModelMapper<M> },
+          ) => void | Promise<void>,
+        ) => StoreSlice<S, C, A>
+        computed: <_C extends Computed>(
+          extension: (
+            slice: S & C & A,
+            opts: { context: Ct; slices: ModelMapper<M> },
+          ) => _C,
+        ) => SliceBuilder<S, _C & C, A, Ct, M>
+        actions: <_A extends Actions>(
+          extension: (
+            slice: S & C & A,
+            opts: { context: Ct; slices: ModelMapper<M> },
+          ) => _A,
+        ) => SliceBuilder<S, C, _A & A, Ct, M>
+      })
 
 export type MicroStore<M extends Slices, C = unknown> = {
   act: <T>(
@@ -222,24 +223,43 @@ export type MicroStore<M extends Slices, C = unknown> = {
     ) => A,
   ) => StoreValue<A>
   initialize: () => MicroStore<M, C>
-  reset: () => void
+  reset: (snapshot?: DeepPartial<StoreValueMapper<StoreMapper<M>>>) => void
   snapshot: () => StoreValueMapper<StoreMapper<M>> extends infer U
     ? { [key in keyof U]: U[key] }
     : never
-  setSnapshot: (
-    state: DeepPartial<StoreValueMapper<StoreMapper<M>>> extends infer U
-      ? { [key in keyof U]: U[key] }
-      : never,
-  ) => void
   setContext: <Partial>(
     context: Partial extends true ? DeepPartial<C> : C,
-    partial?: Partial,
   ) => void
-  spy: (() => void) & {
-    history: { type: string; payload?: any }[]
+  spy: (options: {
+    reset?: (cb: () => void) => void
+    restore?: (cb: () => void) => void
+    context?: DeepPartial<C>
+    snapshot?: DeepPartial<
+      StoreValueMapper<StoreMapper<M>> extends infer U
+        ? { [key in keyof U]: U[key] }
+        : never
+    >
+  }) => {
+    context: (context: DeepPartial<C>) => void
+    snapshot: (
+      snapshot: DeepPartial<
+        StoreValueMapper<StoreMapper<M>> extends infer U
+          ? { [key in keyof U]: U[key] }
+          : never
+      >,
+    ) => void
     clear: () => void
-    stop: () => void
+    reset: () => void
+    restore: () => void
+    history: { type: string; payload?: Record<string, any> }[]
   }
 } extends infer U
   ? { [key in keyof U]: U[key] }
   : never
+
+export type MicroStoreOptions<M, C> = {
+  name?: string
+  devtools?: boolean
+  context?: C
+  extensions?: ((store: M) => any)[]
+}
