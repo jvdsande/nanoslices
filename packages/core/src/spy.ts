@@ -37,10 +37,7 @@ export const subscribeToActions = (
 
   if (!('get' in slice) && !('subscribe' in slice)) {
     Object.keys(slice).forEach((k) =>
-      subscribeToActions(
-        slice[k] as Record<string, unknown>,
-        onSlice,
-      ),
+      subscribeToActions(slice[k] as Record<string, unknown>, onSlice),
     )
   }
 }

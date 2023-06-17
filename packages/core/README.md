@@ -139,7 +139,7 @@ _Main methods to use to consume the state in an application._
 _Additional methods used for advances use cases._
 
 - `reset()`: Restore the store to its initial state, before _initialize()_ was called. Restores all the atoms to the default value they were given
-  when creating slices. Can optionally take a snapshot as parameter, applied to the state after reset. The snapshot is a deep partial representation 
+  when creating slices. Can optionally take a snapshot as parameter, applied to the state after reset. The snapshot is a deep partial representation
   of the state, and updates all the atoms accordingly with the new value. Note that any value passed to a `computed` store will be ignored, and the actual computed value from other atoms will be used.
 - `snapshot()`: Return a deep representation of the current state as a plain JS object, no atoms.
 - `setContext(context)`: Replace the context initially passed in `createStore` with a new value. In TypeScript, the new context type
@@ -350,6 +350,7 @@ A nanoslices plugins extends the store creation function to add new methods on t
 in a standardize function passed to the `registerExtension` function exposed by `@nanoslices/core`.
 
 The function receives three parameters:
+
 - The raw store, as in the record of slices with unlimited access to the underlying atoms.
 - The options passed to the `createStore` function
 - A set of dedicated plugin options:
@@ -382,7 +383,7 @@ registerExtension((store) => ({
 }))
 ```
 
-Since nanoslices is built with TypeScript users in mind, plugins can extend nanoslices' type definitions from the 
+Since nanoslices is built with TypeScript users in mind, plugins can extend nanoslices' type definitions from the
 `@nanoslices/types` package to add typing for additional options (by extending `NanoSlicesOptions`) and additional
 methods (by extending `NanoSlices`).
 
@@ -393,9 +394,7 @@ import { Store, StoreValue } from 'nanostores'
 import { Slices, StoreMapper } from '@nanoslices/types'
 
 type UseNanoSlices<M extends Slices> = <A extends Store>(
-  mapper: (
-    model: StoreMapper<M>,
-  ) => A,
+  mapper: (model: StoreMapper<M>) => A,
 ) => StoreValue<A>
 
 declare module '@nanoslices/types' {

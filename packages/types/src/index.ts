@@ -76,7 +76,9 @@ export type StoreValueMapper<C extends State> = (
 ) extends infer U
   ? { [key in keyof U]: U[key] }
   : never
-export type StoreSnapshot<C extends Slices> = StoreValueMapper<StoreMapper<C>> extends infer U
+export type StoreSnapshot<C extends Slices> = StoreValueMapper<
+  StoreMapper<C>
+> extends infer U
   ? { [key in keyof U]: U[key] }
   : never
 
@@ -238,8 +240,8 @@ export interface NanoSlices<M extends Slices, C = unknown> {
 export type ExtensionOptions<M extends Slices, C> = {
   initialState: StoreSnapshot<M>
   replaceContext: (context: C) => void
-  takeSnapshot: () => StoreSnapshot<M>,
-  restoreSnapshot: (snapshot: DeepPartial<StoreSnapshot<M>>) => void,
+  takeSnapshot: () => StoreSnapshot<M>
+  restoreSnapshot: (snapshot: DeepPartial<StoreSnapshot<M>>) => void
   subscribeToActions: (
     onSlice: (actionSpy: {
       subscribe: (

@@ -5,8 +5,9 @@ nanoslices is a wrapper library around [nanostores](https://npmjs.com/nanostores
 It allows creating global stores composed of slices, each slice themselves composed of nanostores `Store`s: atoms, maps,
 computed...
 
-The generated store comes with a connection to Redux DevTools, and offers a way to declare _actions_ that can modify the atoms.
-Atoms are not writable from outside those actions by default, adding a safety layer around nanostores.
+The generated store offers a way to declare _actions_ that can modify atoms. Atoms are not writable from outside those actions by default, adding a safety layer around nanostores.
+
+The store system is extensible through plugins to add functionality such as Redux DevTools support or testability through action spies.
 
 > Disclaimer: nanoslices is not affiliated to nanostores in any way, we are just wrapping the library. Many thanks
 > for nanostores for offering solid foundations, and apologies if nanoslices' approach is somehow against nanostores base philosophy :)
@@ -43,10 +44,10 @@ of atoms, maps, computed, and actions. You can create a `Slice` using the export
 import { atom, computed } from 'nanostores'
 import { createSlice } from '@nanoslices/core'
 
-export const profile = createSlice({
+export const profile = createSlice(() => ({
   firstName: atom(''),
   lastName: atom(''),
-})
+}))
   .computed((slice) => ({
     fullName: computed(
       [slice.firstName, slice.lastName],
@@ -59,7 +60,6 @@ export const profile = createSlice({
       slice.lastName.set(lastName)
     },
   }))
-  .initialize()
 ```
 
 You can then use your `Slice` to create a `Store`. A `Store` simply takes a map of `Slices`, and turns them into a usable store:
@@ -88,13 +88,14 @@ console.log(Store.get(({ profile }) => profile.fullName))
 ## Store options
 
 You can configure your store through the second argument of `createStore`. Just as the argument itself, all fields
-of the configuration object are optional:
+of the configuration object are optional.
 
-- `name: string`: give a name to the store, used internally by the devtools connection. Defaults to `Nanoslices`.
-- `devtools: boolean`: whether to activate the devtools connection. This is not recommended in production, as it negatively
-  impacts the store's performances.
+By default, only one option is available:
+
 - `context: any`: variable that will be passed to all slice functions (`computed`, `actions` and `initialize`).
   Use it to inject some shared context across your slices, such as API services or configuration.
+
+More options can be added through [plugins](#plugins).
 
 ## Slice methods
 
@@ -116,9 +117,9 @@ Here are the methods available:
   Returns a map of actions that can modify the state. Through `options.slices`, it can compose actions from other slices or
   read other slices' state, and through `options.context` it can access the shared store context.
   Can be chained multiple times to compose actions together.
-- `initialize((slice, options) => T)`: Final method of the slice creator. **Must be called** to create a valid `Slice`. Its argument is optional,
-  and is a callback function with access to the slice and the standard `options` that will be called if `Store.initialize` is called.
-  The callback can be used to initialize the slice with asynchronous data in a controlled manner.
+- `initialize((slice, options) => T)`: Receives the current slice and the standard `options`, and is called if `Store.initialize` is called.
+  The callback can be used to initialize the slice with asynchronous data in a controlled manner. After `initialize`, the slice is considered
+  final, it is not possible to call `actions` or `computed` anymore.
 
 ## Store methods
 
@@ -135,24 +136,14 @@ _Main methods to use to consume the state in an application._
 
 **Advanced methods:**
 
-_Additional methods mostly used for testing or advances use cases._
+_Additional methods used for advances use cases._
 
 - `reset()`: Restore the store to its initial state, before _initialize()_ was called. Restores all the atoms to the default value they were given
-  when creating slices.
+  when creating slices. Can optionally take a snapshot as parameter, applied to the state after reset. The snapshot is a deep partial representation
+  of the state, and updates all the atoms accordingly with the new value. Note that any value passed to a `computed` store will be ignored, and the actual computed value from other atoms will be used.
 - `snapshot()`: Return a deep representation of the current state as a plain JS object, no atoms.
-- `setSnapshot(snapshot)`: Takes a deep partial representation of the state, and updates all the atoms accordingly with the new value.
-  can be used when testing parts of the application that depends on the state, to bring the state to a controlled, known value easily.
-  Note that any value passed to a `computed` store will be ignored, and the actual computed value from other atoms will be used.
 - `setContext(context)`: Replace the context initially passed in `createStore` with a new value. In TypeScript, the new context type
-  must be compatible with the original context type. For instance, can be used in tests to inject mocks of API services.
-  If you want to pass it a partial representation of the context in a test environment, you can pass the second argument as `true` to
-  tell TypeScript to use partial matching instead of exact matching.
-- `spy()`: Enable spying on action execution. After `spy()` is called, all actions will push an entry into the `spy.history` array.
-  In tests, it becomes possible to read this array to detect if a given action was correctly called with a given payload.
-  In addition to `spy.history`, two methods are available: `spy.clear()` will empty the history, and `spy.stop()` will disable
-  the spy listener. Calling `spy()` always resets the history too.
-  If an action returns a `Promise`, then the spy will automatically listen to it and append a `(success)` action to the history upon success,
-  or a `(fail)` action upon error.
+  must be compatible with the original context type.
 
 ## Advanced usage
 
@@ -164,9 +155,9 @@ It's possible to chain multiple `.computed` methods to compose computed values i
 import { computed } from 'nanostores'
 import { createSlice } from '@nanoslices/core'
 
-export const statistics = createSlice({
+export const statistics = createSlice(() => ({
   tasks: atom<{ done: boolean }>([]),
-})
+}))
   .computed((slice) => ({
     total: computed(slice.tasks, (tasks) => tasks.length),
     done: computed(
@@ -180,7 +171,6 @@ export const statistics = createSlice({
       (total, done) => Math.round(done * 100) / total,
     ),
   }))
-  .initialize()
 ```
 
 ### Composing actions
@@ -191,10 +181,10 @@ It's also possible to chain multiple `.actions` methods to compose actions in a 
 import { atom, computed } from 'nanostores'
 import { createSlice, createStore } from '@nanoslices/core'
 
-const profile = createSlice({
+const profile = createSlice(() => ({
   firstName: atom(''),
   lastName: atom(''),
-})
+}))
   .computed((slice) => ({
     fullName: computed(
       [slice.firstName, slice.lastName],
@@ -215,7 +205,6 @@ const profile = createSlice({
       slice.setLastName(lastName)
     },
   }))
-  .initialize()
 ```
 
 ### Composing slices
@@ -226,10 +215,10 @@ You can compose slices together through the `options` parameter passed to slice 
 import { atom, computed } from 'nanostores'
 import { createSlice, createStore } from '@nanoslices/core'
 
-const profile = createSlice({
+const profile = createSlice(() => ({
   firstName: atom(''),
   lastName: atom(''),
-})
+}))
   .computed((slice) => ({
     fullName: computed(
       [slice.firstName, slice.lastName],
@@ -242,17 +231,15 @@ const profile = createSlice({
       slice.lastName.set(lastName)
     },
   }))
-  .initialize()
 
-const employeeCard = createSlice({
+const employeeCard = createSlice(() => ({
   employeeId: atom(''),
   job: atom(''),
-})
+}))
   .slices({ profile })
   .computed((slice, { slices }) => ({
     employeeName: computed([slices.profile.fullName], (name) => name),
   }))
-  .initialize()
 
 export const Store = createStore({ profile, employeeCard })
 ```
@@ -281,10 +268,10 @@ import { createSlice } from '@nanoslices/core'
 
 import { Context } from './context'
 
-const employeeCard = createSlice({
+const employeeCard = createSlice(() => ({
   employeeId: atom(''),
   job: atom(''),
-})
+}))
   .context<Context>()
   .actions((slice) => ({
     setEmployeeId: (id: string) => slice.employeeId.set(id),
@@ -297,10 +284,9 @@ const employeeCard = createSlice({
       slice.setJob(employee.job)
     },
   }))
-  .initialize()
 ```
 
-### Initialize a slice
+### Initializing a slice
 
 The `initialize` method of slices can take an optional callback that runs with the complete slice and options, when `Store.initialize()`
 is called:
@@ -312,10 +298,10 @@ import { createSlice } from '@nanoslices/core'
 
 import { Context } from './context'
 
-const employeeCard = createSlice({
+const employeeCard = createSlice(() => ({
   employeeId: atom(''),
   job: atom(''),
-})
+}))
   .context<Context>()
   .actions((slice) => ({
     setEmployeeId: (id: string) => slice.employeeId.set(id),
@@ -345,3 +331,75 @@ export const Store = createStore({ employeeCard })
 
 The Store's `initialize` method returns the Store itself, so it can be safely chained in the export statement
 if you want to initialize the slices right away.
+
+## Plugins
+
+### Official plugins
+
+Here is a list of plugins developed and maintained by the nanoslices team.
+
+- [@nanoslices/react](https://npmjs.com/package/@nanoslices/react): React wrapper, adding a `use` method on the Store
+  to subscribe to atoms in React components.
+- [@nanoslices/devtools](https://npmjs.com/package/@nansolices/devtools): Connects nanoslices to the Redux DevTools.
+- [@nanoslices/spy](https://npmjs.com/package/@nanoslices/spy): Adds a `spy` method on the Store to help using nanoslices
+  in tests.
+
+### Writing a plugin
+
+A nanoslices plugins extends the store creation function to add new methods on the generated store. A plugin consists
+in a standardize function passed to the `registerExtension` function exposed by `@nanoslices/core`.
+
+The function receives three parameters:
+
+- The raw store, as in the record of slices with unlimited access to the underlying atoms.
+- The options passed to the `createStore` function
+- A set of dedicated plugin options:
+  - `initialState`: a snapshot of what the state looks like upon initialization
+  - `subscribeToActions`: a function for subscribing to actions. The passed parameters is called for each slice of the store,
+    and receives the linked `ActionSpy` object which exposes its own `subscribe` method.
+  - `takeSnapshot`: a function returning a snapshot of the current state of the store.
+  - `restoreSnapshot`: a function taking a partial state snapshot and applying it to the store.
+
+It returns a map of methods to add to the final store.
+
+Here is an example of plugins, adapted from our React wrapper:
+
+```ts
+import { useStore } from '@nanostores/react'
+import { registerExtension } from '@nanoslices/core'
+
+// It's good practice to re-export Core from each plugin
+// This way for instance, in a React app, @nanoslices/react can become the main entry point
+export * from '@nanoslices/core'
+
+const createUseStoreAtom = (store) => {
+  return (mapper) => useStore(mapper(store))
+}
+
+// The extension receives the store as first parameter, and returns a map
+// of method to add to the final store
+registerExtension((store) => ({
+  use: createUseStoreAtom(store),
+}))
+```
+
+Since nanoslices is built with TypeScript users in mind, plugins can extend nanoslices' type definitions from the
+`@nanoslices/types` package to add typing for additional options (by extending `NanoSlicesOptions`) and additional
+methods (by extending `NanoSlices`).
+
+Here is how the React wrapper extends the `NanoSlices` interface:
+
+```ts
+import { Store, StoreValue } from 'nanostores'
+import { Slices, StoreMapper } from '@nanoslices/types'
+
+type UseNanoSlices<M extends Slices> = <A extends Store>(
+  mapper: (model: StoreMapper<M>) => A,
+) => StoreValue<A>
+
+declare module '@nanoslices/types' {
+  interface NanoSlices<M extends Slices, C> {
+    use: UseNanoSlices<M>
+  }
+}
+```

@@ -14,7 +14,7 @@ type UseNanoSlices<M extends Slices> = <A extends Store>(
 ) => StoreValue<A>
 
 declare module '@nanoslices/types' {
-  interface NanoSlices<M extends Slices, C> {
+  interface NanoSlices<M extends Slices> {
     use: UseNanoSlices<M>
   }
 }

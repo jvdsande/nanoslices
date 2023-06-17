@@ -9,13 +9,11 @@
   "scripts": {
     "build": "tsc"
   },
-  "dependencies": {
-    "@nanoslices/types": "0.0.0-rc.10"
-  },
   "peerDependencies": {
     "nanostores": "^0.9.1"
   },
   "devDependencies": {
+    "@nanoslices/types": "0.0.0-rc.10",
     "@redux-devtools/extension": "^3.2.5"
   },
   "main": "dist/index.js",

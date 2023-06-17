@@ -33,7 +33,7 @@ export const tasks = createSlice(() => ({
     ),
   }))
   .computed((slice) => ({
-    empty: computed([slice.flat], (flat) => !flat.length)
+    empty: computed([slice.flat], (flat) => !flat.length),
   }))
   .actions((slice) => ({
     addTask: (name: string) =>

@@ -5,30 +5,35 @@ Re-export all helpers from Core, but the created stores have a new `use` propert
 
 ## Installation
 
-`@nanoslices/react` depends on `@nanoslices/core`, so you need to install both. Furthermore, `@nanoslices/core` depends on
-`nanostores` and `@nanoslices/react` depends on `@nanostores/react`, as peer dependencies, so you need them both if you
-are not using NPM 7 or higher
+`@nanoslices/react` depends on `@nanoslices/core`, refer to [@nanoslices/core](https://npmjs.com/package/@nanoslices/core)
+for its installation instruction.
+
+`@nanoslices/react` also depends on `@nanostores/react` as peer dependency, so you need to install it manually if you are
+not using npm 7 or higher.
 
 **npm >= 7**
 
 ```
-npm install --save @nanoslices/core @nanoslices/react
+npm install --save @nanoslices/react
 ```
 
 **npm < 7**
 
 ```
-npm install --save @nanoslices/core @nanoslices/react nanostores @nanostores/react
+npm install --save @nanoslices/react @nanostores/react
 ```
 
 **yarn**
 
 ```
-yarn add @nanoslices/core @nanoslices/react nanostores @nanostores/react
+yarn add @nanoslices/react @nanostores/react
 ```
 
-## The `Store.use` hook
+## Usage
 
-With a Store created through the React wrapper, a new `Store.use` hook is made available.
-This hook takes a selector which receives the Nanostores stores from the state, and must return one. Internally, it
-will call `@nanostores/react`'s `useStore` on the received Nanostore, subscribing to updates.
+Simply import `@nanoslices/react` somewhere in your application, preferably in the file from which your store is exported.
+
+After that, a new `use` method will be made available on your stores.
+
+This hook takes a selector which receives the nanostores stores from the state, and must return one. Internally, it
+will call `@nanostores/react`'s `useStore` on the received nanostore, subscribing to updates.

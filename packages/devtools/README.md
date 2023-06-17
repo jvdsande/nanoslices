@@ -1,34 +1,29 @@
-# @nanoslices/react
+# @nanoslices/devtools
 
-React wrapper for [@nanoslices/core](https://npmjs.com/@nanoslices/core).
-Re-export all helpers from Core, but the created stores have a new `use` property.
+Nanoslices plugin for adding a connection to the Redux Devtools.
 
 ## Installation
 
-`@nanoslices/react` depends on `@nanoslices/core`, so you need to install both. Furthermore, `@nanoslices/core` depends on
-`nanostores` and `@nanoslices/react` depends on `@nanostores/react`, as peer dependencies, so you need them both if you
-are not using NPM 7 or higher
+`@nanoslices/devtools` depends on `@nanoslices/core`, refer to [@nanoslices/core](https://npmjs.com/package/@nanoslices/core)
+for its installation instruction.
 
-**npm >= 7**
-
-```
-npm install --save @nanoslices/core @nanoslices/react
-```
-
-**npm < 7**
+**npm**
 
 ```
-npm install --save @nanoslices/core @nanoslices/react nanostores @nanostores/react
+npm install --save @nanoslices/devtools
 ```
 
 **yarn**
 
 ```
-yarn add @nanoslices/core @nanoslices/react nanostores @nanostores/react
+yarn add @nanoslices/devtools
 ```
 
-## The `Store.use` hook
+## Usage
 
-With a Store created through the React wrapper, a new `Store.use` hook is made available.
-This hook takes a selector which receives the Nanostores stores from the state, and must return one. Internally, it
-will call `@nanostores/react`'s `useStore` on the received Nanostore, subscribing to updates.
+Simply import `@nanoslices/devtools` somewhere in your application, preferably in the file from which your store is exported.
+
+After that, two new options will be available in `createStore` calls:
+
+- `devtools: boolean` controls whether to setup the Redux DevTools connection. It is not recommended to use this is production.
+- `name: string` lets you set a name for your DevTools store. Defaults to `Nanoslices` if omitted.

@@ -1,8 +1,4 @@
-import {
-  DeepPartial,
-  Slices,
-  StoreSnapshot,
-} from '@nanoslices/types'
+import { DeepPartial, Slices, StoreSnapshot } from '@nanoslices/types'
 import { registerExtension } from '@nanoslices/core'
 
 type Spy<M extends Slices, C> = (options: {
@@ -10,17 +6,13 @@ type Spy<M extends Slices, C> = (options: {
   restore?: (cb: () => void) => void
   context?: DeepPartial<C>
   snapshot?: DeepPartial<
-    StoreSnapshot<M> extends infer U
-      ? { [key in keyof U]: U[key] }
-      : never
+    StoreSnapshot<M> extends infer U ? { [key in keyof U]: U[key] } : never
   >
 }) => {
   context: (context: DeepPartial<C>) => void
   snapshot: (
     snapshot: DeepPartial<
-      StoreSnapshot<M> extends infer U
-        ? { [key in keyof U]: U[key] }
-        : never
+      StoreSnapshot<M> extends infer U ? { [key in keyof U]: U[key] } : never
     >,
   ) => void
   clear: () => void
@@ -30,7 +22,7 @@ type Spy<M extends Slices, C> = (options: {
 }
 
 declare module '@nanoslices/types' {
-  interface NanoSlicesOptions<C> {
+  interface NanoSlicesOptions {
     spyEnabled?: boolean
   }
 
@@ -74,15 +66,11 @@ registerExtension((store, options, extensionOptions) => {
       const context = (context: DeepPartial<C>) => {
         extensionOptions.replaceContext(context as C)
       }
-      const snapshot = (
-        state?: DeepPartial<
-          StoreSnapshot<M>
-        >,
-      ) => {
+      const snapshot = (state?: DeepPartial<StoreSnapshot<M>>) => {
         extensionOptions.restoreSnapshot(
-          (state ?? spyOptions?.snapshot ?? extensionOptions.initialState) as DeepPartial<
-            StoreSnapshot<M>
-          >
+          (state ??
+            spyOptions?.snapshot ??
+            extensionOptions.initialState) as DeepPartial<StoreSnapshot<M>>,
         )
       }
       const clear = () => {

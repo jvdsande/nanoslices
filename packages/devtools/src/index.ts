@@ -4,7 +4,7 @@ import { StoreSnapshot } from '@nanoslices/types'
 import { createDevTools } from './devtools'
 
 declare module '@nanoslices/types' {
-  interface NanoSlicesOptions<C> {
+  interface NanoSlicesOptions {
     devtools?: boolean
     name?: string
   }

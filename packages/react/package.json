@@ -10,8 +10,10 @@
     "build": "tsc"
   },
   "dependencies": {
-    "@nanoslices/types": "0.0.0-rc.10",
     "@nanoslices/core": "^0.0.0-rc.10"
+  },
+  "devDependencies": {
+    "@nanoslices/types": "0.0.0-rc.10"
   },
   "peerDependencies": {
     "@nanostores/react": "^0.7.1",
@@ -22,8 +24,5 @@
   "types": "dist/index.d.ts",
   "publishConfig": {
     "access": "public"
-  },
-  "devDependencies": {
-    "prettier": "^2.8.8"
   }
 }
