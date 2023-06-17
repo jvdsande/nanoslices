@@ -3,9 +3,10 @@ import { Store, StoreValue } from 'nanostores'
 import {
   createStore as createRawStore,
   MicroStore,
-  Slices, StoreMapper,
+  MicroStoreOptions,
+  Slices,
+  StoreMapper,
 } from '@nanoslices/core'
-import { MicroStoreOptions } from '@nanoslices/core/dist/types'
 
 export * from '@nanoslices/core'
 
@@ -24,20 +25,24 @@ type UseMicroStore<M extends Slices> = <A extends Store>(
 
 export const withReact = <M extends Slices, C, S extends MicroStore<M, C>>(
   createStore: (model: M, options?: MicroStoreOptions<M, C>) => S,
-): (model: M, options?: MicroStoreOptions<M, C>) => S & {
+): ((
+  model: M,
+  options?: MicroStoreOptions<M, C>,
+) => S & {
   use: UseMicroStore<M>
-} => {
-  return (model, options) => createStore(model, {
-    ...options,
-    extensions: [
-      ...(options?.extensions ?? []),
-      (store) => ({
-        use: createUseStoreAtom(store),
-      }),
-    ],
-  }) as S & {
-    use: UseMicroStore<M>
-  }
+}) => {
+  return (model, options) =>
+    createStore(model, {
+      ...options,
+      extensions: [
+        ...(options?.extensions ?? []),
+        (store) => ({
+          use: createUseStoreAtom(store),
+        }),
+      ],
+    }) as S & {
+      use: UseMicroStore<M>
+    }
 }
 
 export const createStore = withReact(createRawStore)

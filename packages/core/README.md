@@ -43,10 +43,10 @@ of atoms, maps, computed, and actions. You can create a `Slice` using the export
 import { atom, computed } from 'nanostores'
 import { createSlice } from '@nanoslices/core'
 
-export const profile = createSlice({
+export const profile = createSlice(() => ({
   firstName: atom(''),
   lastName: atom(''),
-})
+}))
   .computed((slice) => ({
     fullName: computed(
       [slice.firstName, slice.lastName],
@@ -177,9 +177,9 @@ It's possible to chain multiple `.computed` methods to compose computed values i
 import { computed } from 'nanostores'
 import { createSlice } from '@nanoslices/core'
 
-export const statistics = createSlice({
+export const statistics = createSlice(() => ({
   tasks: atom<{ done: boolean }>([]),
-})
+}))
   .computed((slice) => ({
     total: computed(slice.tasks, (tasks) => tasks.length),
     done: computed(
@@ -203,10 +203,10 @@ It's also possible to chain multiple `.actions` methods to compose actions in a 
 import { atom, computed } from 'nanostores'
 import { createSlice, createStore } from '@nanoslices/core'
 
-const profile = createSlice({
+const profile = createSlice(() => ({
   firstName: atom(''),
   lastName: atom(''),
-})
+}))
   .computed((slice) => ({
     fullName: computed(
       [slice.firstName, slice.lastName],
@@ -237,10 +237,10 @@ You can compose slices together through the `options` parameter passed to slice 
 import { atom, computed } from 'nanostores'
 import { createSlice, createStore } from '@nanoslices/core'
 
-const profile = createSlice({
+const profile = createSlice(() => ({
   firstName: atom(''),
   lastName: atom(''),
-})
+}))
   .computed((slice) => ({
     fullName: computed(
       [slice.firstName, slice.lastName],
@@ -254,10 +254,10 @@ const profile = createSlice({
     },
   }))
 
-const employeeCard = createSlice({
+const employeeCard = createSlice(() => ({
   employeeId: atom(''),
   job: atom(''),
-})
+}))
   .slices({ profile })
   .computed((slice, { slices }) => ({
     employeeName: computed([slices.profile.fullName], (name) => name),
@@ -290,10 +290,10 @@ import { createSlice } from '@nanoslices/core'
 
 import { Context } from './context'
 
-const employeeCard = createSlice({
+const employeeCard = createSlice(() => ({
   employeeId: atom(''),
   job: atom(''),
-})
+}))
   .context<Context>()
   .actions((slice) => ({
     setEmployeeId: (id: string) => slice.employeeId.set(id),
@@ -320,10 +320,10 @@ import { createSlice } from '@nanoslices/core'
 
 import { Context } from './context'
 
-const employeeCard = createSlice({
+const employeeCard = createSlice(() => ({
   employeeId: atom(''),
   job: atom(''),
-})
+}))
   .context<Context>()
   .actions((slice) => ({
     setEmployeeId: (id: string) => slice.employeeId.set(id),

@@ -18,7 +18,7 @@ import {
   StoreValueMapper,
 } from './types'
 
-export type { Slices, StoreMapper, MicroStore } from './types'
+export type { Slices, StoreMapper, MicroStore, MicroStoreOptions } from './types'
 export * from './utils'
 export * from './slice'
 
@@ -122,17 +122,18 @@ export const createStore = <M extends Slices, C>(
 
   let connection: ReturnType<typeof createDevTools>
   if (options?.devtools) {
-    connection = createDevTools(options?.name, asStore)
+    const connection = createDevTools(options?.name, asStore)
     subscribeToActions(asStore, [], connection.subscribe)
   }
 
   const spy: MicroStore<M, C>['spy'] = (options) => {
     const history: { type: string }[] = []
+    const subscriptions: (() => void)[] = []
     subscribeToActions(asStore, [], (slice) => {
       // @ts-expect-error - development hidden field
-      slice[ACTION_SPY].subscribe((action) => {
+      subscriptions.push(slice[ACTION_SPY].subscribe((action) => {
         history.push(action)
-      })
+      }))
     })
 
     const context = (context: DeepPartial<C>) => {
@@ -156,8 +157,25 @@ export const createStore = <M extends Slices, C>(
       snapshot()
       clear()
     }
+
     const restore = () => {
-      subscribeToActions(asStore, [], connection?.subscribe)
+      options = {}
+      reset()
+      subscriptions.forEach((subscribe) => subscribe())
+
+      spyMethods.clear = () => null
+      spyMethods.snapshot = () => null
+      spyMethods.context = () => null
+      spyMethods.reset = () => null
+    }
+
+    const spyMethods = {
+      history,
+      clear,
+      snapshot,
+      context,
+      reset,
+      restore,
     }
 
     options?.reset?.(() => {
@@ -169,14 +187,7 @@ export const createStore = <M extends Slices, C>(
 
     reset()
 
-    return {
-      history,
-      clear,
-      snapshot,
-      restore,
-      context,
-      reset,
-    }
+    return spyMethods
   }
 
   const extensions: Record<string, any> = {}

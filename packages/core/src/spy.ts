@@ -4,7 +4,12 @@ export const ACTION_SPY = Symbol('actionSpy')
 
 type ActionSpy = {
   __actions: Record<string, (...args: any[]) => any>
-  __push(_: { type: string; payload: unknown, success?: unknown, fail?: unknown }): void
+  __push(_: {
+    type: string
+    payload: unknown
+    success?: unknown
+    fail?: unknown
+  }): void
   subscribe(onAction: (a: { type: string; payload: unknown }) => void): void
 }
 
@@ -18,14 +23,7 @@ export const subscribeToActions = (
   }
 
   if (ACTION_SPY in slice) {
-    if (onSlice) {
-      onSlice(slice)
-    } else {
-      // @ts-expect-error - development hidden field
-      slice[ACTION_SPY].subscribe(() => {
-        // Do nothing
-      })
-    }
+    onSlice(slice)
   }
 
   if (!('get' in slice) && !('subscribe' in slice)) {
@@ -77,7 +75,9 @@ export const spyOnActions = (
 
         return ret
       }
-      devtools.__actions[['@action', ...path, key].join('.')] = actions[key] as (...args: any[]) => any
+      devtools.__actions[['@action', ...path, key].join('.')] = actions[
+        key
+      ] as (...args: any[]) => any
     } else {
       spyOnActions(actions[key] as Actions, [...path, key], slice)
     }
@@ -88,17 +88,29 @@ export const spyOnActions = (
 
 export const prepareActionSpy = (model: any) => {
   model[ACTION_SPY] = (): ActionSpy => {
-    const devtools = {
+    const actionSpy = {
       __actions: {},
-      __push(_: { type: string; payload: unknown }) {
-        // Does nothing by default
+      __listeners: [] as ((action: {
+        type: string
+        payload: unknown
+      }) => void)[],
+      __push(action: { type: string; payload: unknown }) {
+        actionSpy.__listeners.forEach((listener) => {
+          listener(action)
+        })
       },
       subscribe(onAction: (a: { type: string; payload: unknown }) => void) {
-        devtools.__push = onAction
+        if (!actionSpy.__listeners.includes(onAction))
+          actionSpy.__listeners.push(onAction)
+        return () => {
+          actionSpy.__listeners = actionSpy.__listeners.filter(
+            (listener) => listener !== onAction,
+          )
+        }
       },
     }
 
-    return devtools
+    return actionSpy
   }
 
   return model

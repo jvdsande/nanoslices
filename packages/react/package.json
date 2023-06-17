@@ -1,7 +1,7 @@
 {
   "name": "@nanoslices/react",
   "description": "React wrapper for Nanoslices",
-  "version": "0.0.0-rc.9",
+  "version": "0.0.0-rc.10",
   "repository": "https://github.com/jvdsande/nanoslices.git",
   "author": "Jérémie van der Sande <jeremie.vandersande@gmail.com>",
   "license": "MIT",
@@ -10,7 +10,7 @@
     "build": "tsc"
   },
   "peerDependencies": {
-    "@nanoslices/core": "^0.0.0-rc.9",
+    "@nanoslices/core": "^0.0.0-rc.10",
     "@nanostores/react": "^0.7.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
