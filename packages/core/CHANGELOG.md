@@ -1,5 +1,12 @@
 # @nanoslices/core
 
+## 0.0.0-rc.12
+
+### Patch Changes
+
+- 5eb4a50: Add types as dependencies so they correctly get installed
+  - @nanoslices/types@0.0.0-rc.12
+
 ## 0.0.0-rc.11
 
 ### Patch Changes

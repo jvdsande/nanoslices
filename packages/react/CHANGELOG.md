@@ -1,5 +1,12 @@
 # @nanoslices/react
 
+## 0.0.0-rc.12
+
+### Patch Changes
+
+- Updated dependencies [5eb4a50]
+  - @nanoslices/core@0.0.0-rc.12
+
 ## 0.0.0-rc.11
 
 ### Patch Changes
