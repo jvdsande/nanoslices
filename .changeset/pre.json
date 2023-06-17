@@ -1,0 +1,12 @@
+{
+  "mode": "pre",
+  "tag": "rc",
+  "initialVersions": {
+    "@nanoslices/core": "0.0.0-rc.10",
+    "@nanoslices/devtools": "0.0.0-rc.10",
+    "@nanoslices/react": "0.0.0-rc.10",
+    "@nanoslices/spy": "0.0.0-rc.10",
+    "@nanoslices/types": "0.0.0-rc.10"
+  },
+  "changesets": []
+}
