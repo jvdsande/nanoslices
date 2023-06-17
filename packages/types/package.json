@@ -1,7 +1,7 @@
 {
-  "name": "@nanoslices/react",
-  "description": "React wrapper for Nanoslices",
+  "name": "@nanoslices/types",
   "version": "0.0.0-rc.10",
+  "description": "Shared types across the Nanoslices packages",
   "repository": "https://github.com/jvdsande/nanoslices.git",
   "author": "Jérémie van der Sande <jeremie.vandersande@gmail.com>",
   "license": "MIT",
@@ -9,21 +9,12 @@
   "scripts": {
     "build": "tsc"
   },
-  "dependencies": {
-    "@nanoslices/types": "0.0.0-rc.10",
-    "@nanoslices/core": "^0.0.0-rc.10"
-  },
   "peerDependencies": {
-    "@nanostores/react": "^0.7.1",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "nanostores": "^0.9.1"
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "publishConfig": {
     "access": "public"
-  },
-  "devDependencies": {
-    "prettier": "^2.8.8"
   }
 }

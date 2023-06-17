@@ -35,7 +35,7 @@ export function Task(props: { id: number; name: string; done?: boolean }) {
         </Text>
       )}
       <Checkbox
-        defaultChecked={props.done}
+        checked={props.done}
         onChange={() => Store.act((store) => store.tasks.toggleTask(props.id))}
       />
       <CloseButton

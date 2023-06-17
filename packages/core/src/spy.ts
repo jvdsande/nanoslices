@@ -1,4 +1,4 @@
-import { Action, Actions, Slices } from './types'
+import { Action, Actions, Slices } from '@nanoslices/types'
 
 export const ACTION_SPY = Symbol('actionSpy')
 
@@ -15,22 +15,30 @@ type ActionSpy = {
 
 export const subscribeToActions = (
   slice: Record<string, unknown>,
-  path: string[],
-  onSlice: (slice: Record<string, unknown>) => void,
+  onSlice: (actionSpy: {
+    subscribe: (
+      subscription: (action: { type: string; payload?: any }) => void,
+    ) => () => void
+  }) => void,
 ) => {
   if (typeof slice === 'function' || !slice) {
     return
   }
 
   if (ACTION_SPY in slice) {
-    onSlice(slice)
+    onSlice(
+      slice[ACTION_SPY] as {
+        subscribe: (
+          subscription: (action: { type: string; payload?: any }) => void,
+        ) => () => void
+      },
+    )
   }
 
   if (!('get' in slice) && !('subscribe' in slice)) {
     Object.keys(slice).forEach((k) =>
       subscribeToActions(
         slice[k] as Record<string, unknown>,
-        [...path, k],
         onSlice,
       ),
     )

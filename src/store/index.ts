@@ -1,4 +1,6 @@
-import { createStore } from '@nanoslices/react'
+import { createStore } from '@nanoslices/core'
+import '@nanoslices/react'
+import '@nanoslices/devtools'
 
 import { tasks } from './slices/tasks'
 import { newTask } from './slices/new-task'

@@ -8,7 +8,7 @@ import {
   ACTIONS,
   COMPUTED,
   INITIALIZE,
-} from './types'
+} from '@nanoslices/types'
 import { prepareActionSpy } from './spy'
 
 const createSliceHelpers = <

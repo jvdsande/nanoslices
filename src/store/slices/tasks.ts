@@ -32,6 +32,9 @@ export const tasks = createSlice(() => ({
         .sort((a, b) => a.id - b.id),
     ),
   }))
+  .computed((slice) => ({
+    empty: computed([slice.flat], (flat) => !flat.length)
+  }))
   .actions((slice) => ({
     addTask: (name: string) =>
       slice.tasks.setKey(Date.now(), { name, done: false }),

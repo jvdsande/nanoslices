@@ -76,6 +76,9 @@ export type StoreValueMapper<C extends State> = (
 ) extends infer U
   ? { [key in keyof U]: U[key] }
   : never
+export type StoreSnapshot<C extends Slices> = StoreValueMapper<StoreMapper<C>> extends infer U
+  ? { [key in keyof U]: U[key] }
+  : never
 
 export type ActionMapper<C extends Slices> = (
   C extends StoreSlice<any, any, any, any>
@@ -207,7 +210,7 @@ export type SliceBuilder<
         ) => SliceBuilder<S, C, _A & A, Ct, M>
       })
 
-export type MicroStore<M extends Slices, C = unknown> = {
+export interface NanoSlices<M extends Slices, C = unknown> {
   act: <T>(
     mapper: (
       model: ActionMapper<M> extends infer U
@@ -222,44 +225,30 @@ export type MicroStore<M extends Slices, C = unknown> = {
         : never,
     ) => A,
   ) => StoreValue<A>
-  initialize: () => MicroStore<M, C>
-  reset: (snapshot?: DeepPartial<StoreValueMapper<StoreMapper<M>>>) => void
-  snapshot: () => StoreValueMapper<StoreMapper<M>> extends infer U
+  initialize: () => NanoSlices<M, C>
+  reset: (snapshot?: DeepPartial<StoreSnapshot<M>>) => void
+  snapshot: () => StoreSnapshot<M> extends infer U
     ? { [key in keyof U]: U[key] }
     : never
   setContext: <Partial>(
     context: Partial extends true ? DeepPartial<C> : C,
   ) => void
-  spy: (options: {
-    reset?: (cb: () => void) => void
-    restore?: (cb: () => void) => void
-    context?: DeepPartial<C>
-    snapshot?: DeepPartial<
-      StoreValueMapper<StoreMapper<M>> extends infer U
-        ? { [key in keyof U]: U[key] }
-        : never
-    >
-  }) => {
-    context: (context: DeepPartial<C>) => void
-    snapshot: (
-      snapshot: DeepPartial<
-        StoreValueMapper<StoreMapper<M>> extends infer U
-          ? { [key in keyof U]: U[key] }
-          : never
-      >,
-    ) => void
-    clear: () => void
-    reset: () => void
-    restore: () => void
-    history: { type: string; payload?: Record<string, any> }[]
-  }
-} extends infer U
-  ? { [key in keyof U]: U[key] }
-  : never
+}
 
-export type MicroStoreOptions<M, C> = {
-  name?: string
-  devtools?: boolean
+export type ExtensionOptions<M extends Slices, C> = {
+  initialState: StoreSnapshot<M>
+  replaceContext: (context: C) => void
+  takeSnapshot: () => StoreSnapshot<M>,
+  restoreSnapshot: (snapshot: DeepPartial<StoreSnapshot<M>>) => void,
+  subscribeToActions: (
+    onSlice: (actionSpy: {
+      subscribe: (
+        subscription: (action: { type: string; payload?: any }) => void,
+      ) => () => void
+    }) => void,
+  ) => void
+}
+
+export interface NanoSlicesOptions<C = unknown> {
   context?: C
-  extensions?: ((store: M) => any)[]
 }

@@ -5,9 +5,8 @@ nanoslices is a wrapper library around [nanostores](https://npmjs.com/nanostores
 It allows creating global stores composed of slices, each slice themselves composed of nanostores `Store`s: atoms, maps,
 computed...
 
-The generated store offers a way to declare _actions_ that can modify atoms. Atoms are not writable from outside those actions by default, adding a safety layer around nanostores.
-
-The store system is extensible through plugins to add functionality such as Redux DevTools support or testability through action spies.
+The generated store comes with a connection to Redux DevTools, and offers a way to declare _actions_ that can modify the atoms.
+Atoms are not writable from outside those actions by default, adding a safety layer around nanostores.
 
 > Disclaimer: nanoslices is not affiliated to nanostores in any way, we are just wrapping the library. Many thanks
 > for nanostores for offering solid foundations, and apologies if nanoslices' approach is somehow against nanostores base philosophy :)
@@ -88,14 +87,14 @@ console.log(Store.get(({ profile }) => profile.fullName))
 ## Store options
 
 You can configure your store through the second argument of `createStore`. Just as the argument itself, all fields
-of the configuration object are optional.
+of the configuration object are optional:
 
-By default, only one option is available:
-
+- `name: string`: give a name to the store, used internally by the devtools connection. Defaults to `Nanoslices`.
+- `devtools: boolean`: whether to activate the devtools connection. This is not recommended in production, as it negatively
+  impacts the store's performances.
 - `context: any`: variable that will be passed to all slice functions (`computed`, `actions` and `initialize`).
   Use it to inject some shared context across your slices, such as API services or configuration.
-
-More options can be added through [plugins](#plugins).
+- `extensions: Extension[]`: extension system allowing to extend the store with more methods, used by our [React wrapper](https://npmjs.com/@nanoslices/react)
 
 ## Slice methods
 
@@ -118,8 +117,7 @@ Here are the methods available:
   read other slices' state, and through `options.context` it can access the shared store context.
   Can be chained multiple times to compose actions together.
 - `initialize((slice, options) => T)`: Receives the current slice and the standard `options`, and is called if `Store.initialize` is called.
-  The callback can be used to initialize the slice with asynchronous data in a controlled manner. After `initialize`, the slice is considered
-  final, it is not possible to call `actions` or `computed` anymore.
+  The callback can be used to initialize the slice with asynchronous data in a controlled manner.
 
 ## Store methods
 
@@ -144,6 +142,30 @@ _Additional methods used for advances use cases._
 - `snapshot()`: Return a deep representation of the current state as a plain JS object, no atoms.
 - `setContext(context)`: Replace the context initially passed in `createStore` with a new value. In TypeScript, the new context type
   must be compatible with the original context type.
+
+**Testing methods:**
+
+_Specific methods used for testing._
+
+- `spy(options)`: Enable spying on action execution, and easily updating the state in a test environment. Returns a `StoreSpy` object
+  complete with useful options for testing. Takes an `options` parameter to configure the testing environment.
+  
+  **Options:**
+  - `reset`: Testing hook in which to reset the state and actions history. Pass it one of your testing framework lifecycle functions such as `beforeEach`.
+  - `restore`: Testing hook in which to restore the state, removing the spy altogether. Pass it one of your testing framework lifecycle functions such as `afterAll`.
+  - `context`: Partial context to set in place of the normal store context, useful for injecting service mocks relevant to the current test suite.
+  - `snapshot`: Partial snapshot of the state to apply when `reset` is called, useful for bringing the state to a relevant value for the current test suite.
+
+  **StoreSpy fields:**
+  - `context(context)`: Takes a new partial context and replace the store context. Useful for injecting mocks relevant to a specific test.
+  - `snapshot(snapshot)`: Takes a partial snapshot and apply it to the store. Useful for bringing the state to a relevant value for a specific test.
+  - `clear()`: Clears all recorded actions, to get back an empty history.
+  - `reset()`: Resets the state to its original state, then applies the snapshot passed as option to `Store.spy()`, if any. Also calls `clear()` internally.
+    Prefer using the `reset` option rather than calling `reset()` yourself.
+  - `restore()`: Restore the state to its original state, and removes the spy completely. Prefer using the `restore` option rather than calling `restore` directly.
+  - `history`: Array containing an entry for each action that have been called since the last `clear()` call. Each action log is an object containing a `type` 
+    field equals to `@action.[path.to.slice].[actionName]` and a `payload` field equals to the `arguments` passed to the action.
+    If an action returns a `Promise`, then an additional entry is added after the `Promise` resolves or rejects. The `type` is the same as the action, with either a `(success)` or `(fail)` suffix.
 
 ## Advanced usage
 
@@ -286,7 +308,7 @@ const employeeCard = createSlice(() => ({
   }))
 ```
 
-### Initializing a slice
+### Initialize a slice
 
 The `initialize` method of slices can take an optional callback that runs with the complete slice and options, when `Store.initialize()`
 is called:
@@ -331,76 +353,3 @@ export const Store = createStore({ employeeCard })
 
 The Store's `initialize` method returns the Store itself, so it can be safely chained in the export statement
 if you want to initialize the slices right away.
-
-## Plugins
-
-### Official plugins
-
-Here is a list of plugins developed and maintained by the nanoslices team.
-
-- [@nanoslices/react](https://npmjs.com/package/@nanoslices/react): React wrapper, adding a `use` method on the Store
-  to subscribe to atoms in React components.
-- [@nanoslices/devtools](https://npmjs.com/package/@nansolices/devtools): Connects nanoslices to the Redux DevTools.
-- [@nanoslices/spy](https://npmjs.com/package/@nanoslices/spy): Adds a `spy` method on the Store to help using nanoslices
-  in tests.
-
-### Writing a plugin
-
-A nanoslices plugins extends the store creation function to add new methods on the generated store. A plugin consists
-in a standardize function passed to the `registerExtension` function exposed by `@nanoslices/core`.
-
-The function receives three parameters:
-- The raw store, as in the record of slices with unlimited access to the underlying atoms.
-- The options passed to the `createStore` function
-- A set of dedicated plugin options:
-  - `initialState`: a snapshot of what the state looks like upon initialization
-  - `subscribeToActions`: a function for subscribing to actions. The passed parameters is called for each slice of the store,
-    and receives the linked `ActionSpy` object which exposes its own `subscribe` method.
-  - `takeSnapshot`: a function returning a snapshot of the current state of the store.
-  - `restoreSnapshot`: a function taking a partial state snapshot and applying it to the store.
-
-It returns a map of methods to add to the final store.
-
-Here is an example of plugins, adapted from our React wrapper:
-
-```ts
-import { useStore } from '@nanostores/react'
-import { registerExtension } from '@nanoslices/core'
-
-// It's good practice to re-export Core from each plugin
-// This way for instance, in a React app, @nanoslices/react can become the main entry point
-export * from '@nanoslices/core'
-
-const createUseStoreAtom = (store) => {
-  return (mapper) => useStore(mapper(store))
-}
-
-// The extension receives the store as first parameter, and returns a map
-// of method to add to the final store
-registerExtension((store) => ({
-  use: createUseStoreAtom(store),
-}))
-```
-
-Since nanoslices is built with TypeScript users in mind, plugins can extend nanoslices' type definitions from the 
-`@nanoslices/types` package to add typing for additional options (by extending `NanoSlicesOptions`) and additional
-methods (by extending `NanoSlices`).
-
-Here is how the React wrapper extends the `NanoSlices` interface:
-
-```ts
-import { Store, StoreValue } from 'nanostores'
-import { Slices, StoreMapper } from '@nanoslices/types'
-
-type UseNanoSlices<M extends Slices> = <A extends Store>(
-  mapper: (
-    model: StoreMapper<M>,
-  ) => A,
-) => StoreValue<A>
-
-declare module '@nanoslices/types' {
-  interface NanoSlices<M extends Slices, C> {
-    use: UseNanoSlices<M>
-  }
-}
-```

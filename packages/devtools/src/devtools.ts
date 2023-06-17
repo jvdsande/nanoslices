@@ -1,19 +1,19 @@
 import type {} from '@redux-devtools/extension'
-import { Slices } from './types'
 
-import { ACTION_SPY } from './spy'
-import { restoreSnapshot, snapshotModel } from './snapshot'
-
-export const createDevTools = (name: string | undefined, model: Slices) => {
-  const reset = snapshotModel(model)
+export const createDevTools = <Snapshot>(
+  name: string,
+  takeSnapshot: () => Snapshot,
+  restoreSnapshot: (snapshot: Snapshot) => void,
+) => {
+  const reset = takeSnapshot()
   const redDev = window.__REDUX_DEVTOOLS_EXTENSION__?.connect({
-    name: name ?? 'Nanoslices',
+    name,
   })
   redDev?.init(reset)
 
   const connection = {
     send: (action: { type: string; payload?: unknown }) => {
-      redDev?.send(action, snapshotModel(model))
+      redDev?.send(action, takeSnapshot())
     },
     listen: (actions: { [key: string]: (...args: unknown[]) => unknown }) => {
       // @ts-expect-error - wrong typing on redux devtools
@@ -41,26 +41,26 @@ export const createDevTools = (name: string | undefined, model: Slices) => {
           }
 
           if (opts.type === 'DISPATCH' && opts.payload.type === 'COMMIT') {
-            redDev?.init(snapshotModel(model))
+            redDev?.init(takeSnapshot())
           }
 
           if (opts.type === 'DISPATCH' && opts.payload.type === 'RESET') {
-            restoreSnapshot(model, reset)
+            restoreSnapshot(reset)
             redDev?.init(reset)
           }
 
           if (opts.type === 'DISPATCH' && opts.payload.type === 'ROLLBACK') {
-            const reset: Record<string, unknown> = JSON.parse(opts.state)
-            restoreSnapshot(model, reset)
-            redDev?.init(reset)
+            const rollback: Snapshot = JSON.parse(opts.state)
+            restoreSnapshot(rollback)
+            redDev?.init(rollback)
           }
 
           if (
             opts.type === 'DISPATCH' &&
             opts.payload.type === 'JUMP_TO_ACTION'
           ) {
-            const jumped: Record<string, unknown> = JSON.parse(opts.state)
-            restoreSnapshot(model, jumped)
+            const jumped: Snapshot = JSON.parse(opts.state)
+            restoreSnapshot(jumped)
           }
         },
       )
@@ -71,14 +71,16 @@ export const createDevTools = (name: string | undefined, model: Slices) => {
         payload: state,
       })
     },
-    subscribe: (slice: Record<string, unknown>) => {
-      // @ts-expect-error - development hidden field
-      slice[ACTION_SPY].subscribe((action) => {
+    subscribe: (actionSpy: {
+      subscribe: (
+        subscription: (action: { type: string; payload?: any }) => void,
+      ) => () => void
+    }) => {
+      actionSpy.subscribe((action) => {
         connection.send(action)
       })
-      // @ts-expect-error - development hidden field
-      connection.listen(slice[ACTION_SPY].__actions)
-    }
+      connection.listen((actionSpy as any).__actions)
+    },
   }
 
   return connection

@@ -1,37 +1,50 @@
-import {Slices} from "./types";
-import {Store, WritableStore} from "nanostores";
+import { State } from '@nanoslices/types'
+import { Store, WritableStore } from 'nanostores'
 
-export const snapshotModel = (model: Slices) => {
-  const state = {}
+const isGettable = (atom: Store | State): atom is Store => {
+  return 'get' in atom
+}
+
+export const takeSnapshot = (model: State) => {
+  const state: Record<string, any> = {}
 
   Object.keys(model).forEach((key) => {
-    if (typeof model[key] === 'function' || !model[key]) {
+    const atom = model[key]
+
+    if (typeof atom === 'function' || !atom) {
       return
     }
-    if ('get' in model[key]) {
-      // @ts-expect-error - read state
-      state[key] = model[key].get()
+
+    if (isGettable(atom)) {
+      state[key] = atom.get()
     } else if (typeof model[key] === 'object') {
-      // @ts-expect-error - read state
-      state[key] = snapshotModel(model[key])
+      state[key] = takeSnapshot(atom)
     }
   })
 
   return state
 }
 
+const isWritable = (atom: Store | State): atom is WritableStore => {
+  return 'get' in atom && 'set' in atom
+}
+
 export const restoreSnapshot = (
-  model: Slices,
+  model: State,
   state: Record<string, unknown>,
 ) => {
-  const restoreAtom = (atom: Store | Slices, state: unknown) => {
-    if ('get' in atom && 'set' in atom) {
-      (atom as WritableStore).set(state)
-    } else if (state && typeof state === 'object') {
+  const restoreAtom = (atom: Store | State, state: unknown) => {
+    if (!state) {
+      return
+    }
+
+    if (isWritable(atom)) {
+      atom.set(state)
+    } else if (typeof state === 'object') {
       Object.keys(state).forEach((key) => {
         restoreAtom(
           atom[key as keyof typeof atom],
-          state[key as keyof typeof state] as Record<string, unknown>,
+          state[key as keyof typeof state],
         )
       })
     }

@@ -1,6 +1,6 @@
 {
-  "name": "@nanoslices/react",
-  "description": "React wrapper for Nanoslices",
+  "name": "@nanoslices/spy",
+  "description": "Spy support for testing Nanoslices",
   "version": "0.0.0-rc.10",
   "repository": "https://github.com/jvdsande/nanoslices.git",
   "author": "Jérémie van der Sande <jeremie.vandersande@gmail.com>",
@@ -10,13 +10,8 @@
     "build": "tsc"
   },
   "dependencies": {
-    "@nanoslices/types": "0.0.0-rc.10",
-    "@nanoslices/core": "^0.0.0-rc.10"
-  },
-  "peerDependencies": {
-    "@nanostores/react": "^0.7.1",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "@nanoslices/core": "^0.0.0-rc.10",
+    "@nanoslices/types": "0.0.0-rc.10"
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

@@ -1,8 +1,4 @@
 import { Store, StoreValue } from 'nanostores'
-import { createDevTools } from './devtools'
-import { crawlObject } from './helpers'
-import { snapshotModel, restoreSnapshot } from './snapshot'
-import { ACTION_SPY, spyOnActions, subscribeToActions } from './spy'
 import {
   STATE,
   ACTIONS,
@@ -10,15 +6,19 @@ import {
   INITIALIZE,
   ActionMapper,
   DeepPartial,
-  MicroStore,
-  MicroStoreOptions,
+  NanoSlices,
+  NanoSlicesOptions,
   Slices,
   StoreMapper,
   StoreSlice,
-  StoreValueMapper,
-} from './types'
+  ExtensionOptions,
+  StoreSnapshot,
+} from '@nanoslices/types'
+import { crawlObject } from './helpers'
+import { takeSnapshot, restoreSnapshot } from './snapshot'
+import { spyOnActions, subscribeToActions, ACTION_SPY } from './spy'
 
-export type { Slices, StoreMapper, MicroStore, MicroStoreOptions } from './types'
+export type { NanoSlices, NanoSlicesOptions } from '@nanoslices/types'
 export * from './utils'
 export * from './slice'
 
@@ -30,7 +30,7 @@ const createGetStoreAtom = <M extends Slices>(model: M) => {
     mapper(model).get()
 }
 
-const loadSliceDevtools = (model: Slices, slices: Slices) => {
+const loadSliceActionSpy = (model: Slices, slices: Slices) => {
   crawlObject(
     model,
     slices,
@@ -93,136 +93,93 @@ const initialize = (
   )
 }
 
+const extensions: (<M extends Slices, C>(
+  store: M,
+  storeOptions: NanoSlicesOptions<C>,
+  extensionOptions: ExtensionOptions<M, C>,
+) => any)[] = []
+export const registerExtension = (extension: (typeof extensions)[number]) => {
+  if (!extensions.includes(extension)) {
+    extensions.push(extension)
+  }
+}
+
 export const createStore = <M extends Slices, C>(
   model: M,
-  options?: MicroStoreOptions<M, C>,
-): MicroStore<M, C> => {
-  const internal = { ...options } as {
-    name?: string
-    devtools?: boolean
-    context?: C
-  }
+  options?: NanoSlicesOptions<C>,
+): NanoSlices<M, C> => {
+  const optionsCopy = { ...options }
   const asStore = {} as StoreSlice<any>
   const asSlice = model as unknown as StoreSlice<any>
 
-  loadSliceDevtools(asSlice, asStore)
-  loadSlicePart(asSlice, asStore, { context: internal?.context, symbol: STATE })
-  const load = () => {
+  loadSliceActionSpy(asSlice, asStore)
+  loadSlicePart(asSlice, asStore, {
+    context: optionsCopy?.context,
+    symbol: STATE,
+  })
+  const reloadSlices = () => {
     loadSlicePart(asSlice, asStore, {
-      context: internal?.context,
+      context: optionsCopy?.context,
       symbol: COMPUTED,
     })
     loadSlicePart(asSlice, asStore, {
-      context: internal?.context,
+      context: optionsCopy?.context,
       symbol: ACTIONS,
     })
   }
-  load()
-  const initialState = snapshotModel(asStore)
+  reloadSlices()
 
-  let connection: ReturnType<typeof createDevTools>
-  if (options?.devtools) {
-    const connection = createDevTools(options?.name, asStore)
-    subscribeToActions(asStore, [], connection.subscribe)
+  const initialState = takeSnapshot(asStore)
+  const replaceContext = (context?: C) => {
+    if (context) {
+      optionsCopy.context = context
+    }
+    reloadSlices()
   }
 
-  const spy: MicroStore<M, C>['spy'] = (options) => {
-    const history: { type: string }[] = []
-    const subscriptions: (() => void)[] = []
-    subscribeToActions(asStore, [], (slice) => {
-      // @ts-expect-error - development hidden field
-      subscriptions.push(slice[ACTION_SPY].subscribe((action) => {
-        history.push(action)
-      }))
-    })
-
-    const context = (context: DeepPartial<C>) => {
-      internal.context = context as C
-      load()
-    }
-    const snapshot = (
-      state?: DeepPartial<
-        StoreValueMapper<StoreMapper<M>> extends infer U
-          ? { [key in keyof U]: U[key] }
-          : never
-      >,
-    ) => {
-      restoreSnapshot(asStore, state ?? options?.snapshot ?? initialState)
-      context(options?.context ?? (internal.context as DeepPartial<C>))
-    }
-    const clear = () => {
-      history.length = 0
-    }
-    const reset = () => {
-      snapshot()
-      clear()
-    }
-
-    const restore = () => {
-      options = {}
-      reset()
-      subscriptions.forEach((subscribe) => subscribe())
-
-      spyMethods.clear = () => null
-      spyMethods.snapshot = () => null
-      spyMethods.context = () => null
-      spyMethods.reset = () => null
-    }
-
-    const spyMethods = {
-      history,
-      clear,
-      snapshot,
-      context,
-      reset,
-      restore,
-    }
-
-    options?.reset?.(() => {
-      reset()
-    })
-    options?.restore?.(() => {
-      restore()
-    })
-
-    reset()
-
-    return spyMethods
+  const extensionOptions = {
+    initialState: initialState as ExtensionOptions<M, C>['initialState'],
+    subscribeToActions: (onSlice: Parameters<typeof subscribeToActions>[1]) =>
+      subscribeToActions(asStore, onSlice),
+    restoreSnapshot: (snapshot: Parameters<typeof restoreSnapshot>[1]) =>
+      restoreSnapshot(asStore, snapshot),
+    takeSnapshot: (() => takeSnapshot(asStore)) as ExtensionOptions<
+      M,
+      C
+    >['takeSnapshot'],
+    replaceContext,
   }
 
-  const extensions: Record<string, any> = {}
-  options?.extensions?.forEach((extension) => {
-    const ext = extension(asStore as unknown as M)
+  const extended: Record<string, any> = {}
+  extensions?.forEach((extension) => {
+    const ext = extension(
+      asStore as unknown as M,
+      optionsCopy,
+      extensionOptions,
+    )
     Object.keys(ext).forEach((key) => {
-      extensions[key] = ext[key]
+      extended[key] = ext[key]
     })
   })
 
   const store = {
-    ...extensions,
     act: createGetStoreAction(asStore as unknown as ActionMapper<M>),
     get: createGetStoreAtom(asStore as unknown as StoreMapper<M>),
     initialize: () => {
-      initialize(asSlice, asStore, { context: internal?.context })
+      initialize(asSlice, asStore, { context: optionsCopy?.context })
       return store
     },
-    snapshot: () => snapshotModel(asStore),
+    snapshot: () => takeSnapshot(asStore),
     reset(
       snapshot?: DeepPartial<
-        StoreValueMapper<StoreMapper<M>> extends infer U
-          ? { [key in keyof U]: U[key] }
-          : never
+        StoreSnapshot<M> extends infer U ? { [key in keyof U]: U[key] } : never
       >,
     ) {
       restoreSnapshot(asStore, snapshot ?? initialState)
-      connection?.snapshot(snapshot ?? initialState)
     },
-    setContext(context: C) {
-      internal.context = context
-      load()
-    },
-    spy,
-  } as unknown as MicroStore<M>
+    setContext: replaceContext,
+    ...extended,
+  } as unknown as NanoSlices<M>
 
   return store
 }
