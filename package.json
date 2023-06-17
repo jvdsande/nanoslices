@@ -15,7 +15,7 @@
     "lint": "eslint src --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "precommit": "cp packages/core/README.md README.md",
-    "release": "yarn build:packages && yarn changeset publishs"
+    "release": "yarn build:packages && yarn changeset publish"
   },
   "dependencies": {
     "@emotion/react": "^11.11.1",
