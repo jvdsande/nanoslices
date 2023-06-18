@@ -34,13 +34,9 @@ export const restoreSnapshot = (
   state: Record<string, unknown>,
 ) => {
   const restoreAtom = (atom: Store | State, state: unknown) => {
-    if (!state) {
-      return
-    }
-
     if (isWritable(atom)) {
       atom.set(state)
-    } else if (typeof state === 'object') {
+    } else if (state && typeof state === 'object') {
       Object.keys(state).forEach((key) => {
         restoreAtom(
           atom[key as keyof typeof atom],
