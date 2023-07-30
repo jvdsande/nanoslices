@@ -32,7 +32,7 @@ const Mutation = () => {
   const [show] = state.use((s) => [s.show])
   const [setShow] = state.act((s) => [s.setShow])
 
-  const [single, refresh] = useSingleLoader(Store, (s) => s.loaders.single, { listen: false })
+  const [single] = useSingleLoader(Store, (s) => s.loaders.single, { listen: false })
   const [mapped] = useMappedLoader(Store, (s) => s.loaders.mapped, { listen: false, resource: 'id' })
   const [mutation, execute] = useMutationLoader(Store, (s) => s.loaders.mutation)
 

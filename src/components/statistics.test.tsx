@@ -26,8 +26,8 @@ describe('the Statistics component', () => {
     act(() => StoreSpy.snapshot({
       tasks: {
         tasks: {
-          1: { name: '1', done: false },
-          2: { name: '2', done: false },
+          '1': { name: '1', done: false },
+          '2': { name: '2', done: false },
         },
       }
     }))
@@ -39,8 +39,8 @@ describe('the Statistics component', () => {
     act(() => StoreSpy.snapshot({
       tasks: {
         tasks: {
-          1: { name: '1', done: true },
-          2: { name: '2', done: false },
+          '1': { name: '1', done: true },
+          '2': { name: '2', done: false },
         },
       }
     }))
@@ -52,8 +52,8 @@ describe('the Statistics component', () => {
     act(() => StoreSpy.snapshot({
       tasks: {
         tasks: {
-          1: { name: '1', done: true },
-          2: { name: '2', done: false },
+          '1': { name: '1', done: true },
+          '2': { name: '2', done: false },
         },
       }
     }))

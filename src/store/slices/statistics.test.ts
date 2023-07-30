@@ -11,10 +11,10 @@ describe('the statistic slice', () => {
     reset: beforeEach,
     snapshot: {
       tasks: {
-        keys: [1, 2],
+        keys: ['1', '2'],
         tasks: {
-          1: { name: 'Task 1', done: true },
-          2: { name: 'Task 2', done: false },
+          '1': { name: 'Task 1', done: true },
+          '2': { name: 'Task 2', done: false },
         }
       }
     }
@@ -29,10 +29,10 @@ describe('the statistic slice', () => {
 
     StoreSpy.snapshot({
       tasks: {
-        keys: [1, 2],
+        keys: ['1', '2'],
         tasks: {
-          1: { name: 'Task 1', done: true },
-          2: { name: 'Task 2', done: true },
+          '1': { name: 'Task 1', done: true },
+          '2': { name: 'Task 2', done: true },
         }
       }
     })
@@ -45,12 +45,12 @@ describe('the statistic slice', () => {
 
     StoreSpy.snapshot({
       tasks: {
-        keys: [1, 2, 3, 4],
+        keys: ['1', '2', '3', '4'],
         tasks: {
-          1: { name: 'Task 1', done: true },
-          2: { name: 'Task 2', done: false },
-          3: { name: 'Task 3', done: false },
-          4: { name: 'Task 4', done: false },
+          '1': { name: 'Task 1', done: true },
+          '2': { name: 'Task 2', done: false },
+          '3': { name: 'Task 3', done: false },
+          '4': { name: 'Task 4', done: false },
         }
       }
     })
