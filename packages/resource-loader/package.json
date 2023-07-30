@@ -10,12 +10,14 @@
     "build": "tsc",
     "clean": "rm -rf dist"
   },
+  "dependencies": {
+    "@nanoslices/core": "^0.0.0-rc.13",
+    "@nanoslices/react": "^0.0.0-rc.13"
+  },
   "devDependencies": {
     "@nanoslices/types": "0.0.0-rc.13"
   },
   "peerDependencies": {
-    "@nanoslices/core": "^0.0.0-rc.13",
-    "@nanoslices/react": "^0.0.0-rc.13",
     "@nanostores/react": "^0.7.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
