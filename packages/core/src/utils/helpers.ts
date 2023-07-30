@@ -14,5 +14,5 @@ export const update =
     atom: A,
     next: Fn = set as Fn,
   ): ((value: StoreValue<A>) => ReturnType<Fn>) =>
-  (value: StoreValue<A>) =>
-    next(value, atom)
+    (value: StoreValue<A>) =>
+      next(value, atom)

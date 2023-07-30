@@ -1,10 +1,12 @@
 import { Badge, Text, Group } from '@mantine/core'
 import { Store } from '../store'
 
-export function Statistics() {
-  const total = Store.use((store) => store.statistics.total)
-  const done = Store.use((store) => store.statistics.done)
-  const progress = Store.use((store) => store.statistics.progress)
+export const Statistics = () => {
+  const [total, done, progress] = Store.use((store) => [
+    store.statistics.total,
+    store.statistics.done,
+    store.statistics.progress,
+  ])
 
   return (
     <Group mt={14} w="100%" position="right" align="center" spacing={8}>

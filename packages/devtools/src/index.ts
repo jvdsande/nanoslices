@@ -1,5 +1,4 @@
 import { registerExtension } from '@nanoslices/core'
-import { StoreSnapshot } from '@nanoslices/types'
 
 import { createDevTools } from './devtools'
 
@@ -12,7 +11,7 @@ declare module '@nanoslices/types' {
 
 export * from '@nanoslices/core'
 
-registerExtension((store, options, extensionOptions) => {
+registerExtension((_, options, extensionOptions) => {
   let connection: ReturnType<typeof createDevTools>
 
   if (options?.devtools) {
@@ -21,11 +20,14 @@ registerExtension((store, options, extensionOptions) => {
       extensionOptions.takeSnapshot,
       extensionOptions.restoreSnapshot,
     )
-    extensionOptions.subscribeToActions(connection.subscribe)
+    extensionOptions.subscribeToActions(connection.send, connection.listen)
+    extensionOptions.onDestroy(() => {
+      connection.destroy()
+    })
   }
 
   return {
-    reset(snapshot?: StoreSnapshot<typeof store>) {
+    reset(snapshot?: typeof options.snapshot) {
       extensionOptions.restoreSnapshot(
         snapshot ?? extensionOptions.initialState,
       )

@@ -1,53 +1,61 @@
-import { computed } from 'nanostores'
-import { persistentMap } from '@nanostores/persistent'
+import { persistentAtom, persistentMap } from '@nanostores/persistent'
 import { createSlice } from '@nanoslices/core'
 
-export const tasks = createSlice(() => ({
-  tasks: persistentMap<{
-    [key: number]: {
-      name: string
-      done: boolean
+const asJson = {
+  listen: false,
+  encode(value: unknown) {
+    return JSON.stringify(value)
+  },
+  decode(value: string) {
+    try {
+      return JSON.parse(value)
+    } catch (err) {
+      return value
     }
-  }>(
-    'tasks',
-    {},
-    {
-      encode(value) {
-        return JSON.stringify(value)
-      },
-      decode(value) {
-        try {
-          return JSON.parse(value)
-        } catch (err) {
-          return value
-        }
-      },
-    },
-  ),
-}))
-  .computed((slice) => ({
-    flat: computed([slice.tasks], (tasks) =>
-      Object.entries(tasks)
-        .map(([id, task]) => ({ ...task, id: +id }))
-        .sort((a, b) => a.id - b.id),
+  },
+}
+
+export const tasks = createSlice()
+  .state(() => ({
+    keys: persistentAtom<string[]>('keys', [], asJson),
+    tasks: persistentMap<{ [key: string]: { name: string; done: boolean } }>(
+      'tasks.',
+      {},
+      asJson,
     ),
   }))
-  .computed((slice) => ({
-    empty: computed([slice.flat], (flat) => !flat.length),
+  .computed(({ slice, computed }) => ({
+    empty: computed(
+      () => [slice.keys],
+      (keys) => !keys.length,
+    ),
+    flat: computed(
+      () => [slice.tasks],
+      (tasks) => Object.values(tasks),
+    ),
   }))
-  .actions((slice) => ({
-    addTask: (name: string) =>
-      slice.tasks.setKey(Date.now(), { name, done: false }),
-    toggleTask: (taskId: number) => {
-      const task = slice.tasks.get()[taskId]
-      slice.tasks.setKey(taskId, { ...task, done: !task.done })
+  .actions(({ slice }) => ({
+    addTask: (name: string) => {
+      const key = Date.now().toFixed()
+
+      slice.tasks.setKey(key, { name, done: false })
+      slice.keys.set([...slice.keys.get(), key])
     },
-    renameTask: (taskId: number, name: string) => {
-      const task = slice.tasks.get()[taskId]
-      slice.tasks.setKey(taskId, { ...task, name })
+    toggleTask: (taskId: string) => {
+      slice.tasks.setKey(taskId, {
+        ...slice.tasks.get()[taskId],
+        done: !slice.tasks.get()[taskId].done,
+      })
     },
-    deleteTask: (taskId: number) => {
-      const { [taskId]: task, ...tasks } = slice.tasks.get()
+    renameTask: (taskId: string, name: string) => {
+      slice.tasks.setKey(taskId, {
+        ...slice.tasks.get()[taskId],
+        name,
+      })
+    },
+    deleteTask: (taskId: string) => {
+      const { [taskId]: _, ...tasks } = slice.tasks.get()
       slice.tasks.set(tasks)
+      slice.keys.set(slice.keys.get().filter((key) => key !== taskId))
     },
   }))

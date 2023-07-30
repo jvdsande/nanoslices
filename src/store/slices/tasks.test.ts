@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { expect } from 'vitest'
 import { createStore } from '@nanoslices/core'
 
 import { tasks } from './tasks.ts'
@@ -20,18 +20,25 @@ describe('the task slice', () => {
     expect(Store.get((store) => store.tasks.flat)).toEqual([])
   })
 
+  it('should compute a flat list of task ids', () => {
+    const Store = createStore({ tasks })
+
+    expect(Store.get((store) => store.tasks.keys)).toEqual([])
+  })
+
   it('should expose an action to add a task', () => {
     const Store = createStore({ tasks })
 
-    expect(Store.get((store) => store.tasks.flat)).toEqual([])
+    expect(Store.get((store) => store.tasks.keys)).toEqual([])
 
     Store.act((store) => store.tasks.addTask('Addition test'))
 
-    expect(Store.get((store) => store.tasks.flat)).toContainEqual(expect.objectContaining({
-      id: expect.any(Number),
+    expect(Store.get((store) => store.tasks.keys)).toContainEqual(expect.any(String))
+    const key = Store.get((store) => store.tasks.keys)[0]
+    expect(Store.get((store) => store.tasks.tasks)[key]).toEqual({
       name: 'Addition test',
-      done: false,
-    }))
+      done: false
+    })
   })
 
   it('should compute an empty property telling if the list is empty', () => {
@@ -49,16 +56,16 @@ describe('the task slice', () => {
 
     Store.act((store) => store.tasks.addTask('Toggle test'))
 
-    const taskId = Store.get((store) => store.tasks.flat)[0].id
-    expect(Store.get((store) => store.tasks.flat)[0].done).toBe(false)
+    const taskId = Store.get((store) => store.tasks.keys)[0]
+    expect(Store.get((store) => store.tasks.tasks)[taskId].done).toBe(false)
 
     Store.act((store) => store.tasks.toggleTask(taskId))
 
-    expect(Store.get((store) => store.tasks.flat)[0].done).toBe(true)
+    expect(Store.get((store) => store.tasks.tasks)[taskId].done).toBe(true)
 
     Store.act((store) => store.tasks.toggleTask(taskId))
 
-    expect(Store.get((store) => store.tasks.flat)[0].done).toBe(false)
+    expect(Store.get((store) => store.tasks.tasks)[taskId].done).toBe(false)
   })
 
   it('should expose an action to rename a task', () => {
@@ -66,12 +73,12 @@ describe('the task slice', () => {
 
     Store.act((store) => store.tasks.addTask('Rename test'))
 
-    const taskId = Store.get((store) => store.tasks.flat)[0].id
-    expect(Store.get((store) => store.tasks.flat)[0].name).toBe('Rename test')
+    const taskId = Store.get((store) => store.tasks.keys)[0]
+    expect(Store.get((store) => store.tasks.tasks)[taskId].name).toBe('Rename test')
 
     Store.act((store) => store.tasks.renameTask(taskId, 'New name'))
 
-    expect(Store.get((store) => store.tasks.flat)[0].name).toBe('New name')
+    expect(Store.get((store) => store.tasks.tasks)[taskId].name).toBe('New name')
   })
 
   it('should expose an action to delete a task', () => {
@@ -79,11 +86,11 @@ describe('the task slice', () => {
 
     Store.act((store) => store.tasks.addTask('Delete test'))
 
-    expect(Store.get((store) => store.tasks.flat)[0]).toBeDefined()
-    const taskId = Store.get((store) => store.tasks.flat)[0].id
+    expect(Store.get((store) => store.tasks.keys)[0]).toBeDefined()
+    const taskId = Store.get((store) => store.tasks.keys)[0]
 
     Store.act((store) => store.tasks.deleteTask(taskId))
 
-    expect(Store.get((store) => store.tasks.flat)[0]).toBeUndefined()
+    expect(Store.get((store) => store.tasks.keys)[0]).toBeUndefined()
   })
 })

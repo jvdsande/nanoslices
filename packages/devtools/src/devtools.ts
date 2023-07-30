@@ -15,7 +15,7 @@ export const createDevTools = <Snapshot>(
     send: (action: { type: string; payload?: unknown }) => {
       redDev?.send(action, takeSnapshot())
     },
-    listen: (actions: { [key: string]: (...args: unknown[]) => unknown }) => {
+    listen: (actions: Map<string, (...args: unknown[]) => unknown>) => {
       // @ts-expect-error - wrong typing on redux devtools
       redDev?.subscribe(
         (
@@ -35,9 +35,7 @@ export const createDevTools = <Snapshot>(
               `(${opts.payload})`,
             )
 
-            if (actions[payload.type]) {
-              actions[payload.type](...payload.payload)
-            }
+            actions.get(payload.type)?.(...(payload.payload ?? []))
           }
 
           if (opts.type === 'DISPATCH' && opts.payload.type === 'COMMIT') {
@@ -71,16 +69,10 @@ export const createDevTools = <Snapshot>(
         payload: state,
       })
     },
-    subscribe: (actionSpy: {
-      subscribe: (
-        subscription: (action: { type: string; payload?: any }) => void,
-      ) => () => void
-    }) => {
-      actionSpy.subscribe((action) => {
-        connection.send(action)
-      })
-      connection.listen((actionSpy as any).__actions)
-    },
+    destroy: () => {
+      // @ts-expect-error - wrong typing on redux devtools
+      redDev?.unsubscribe()
+    }
   }
 
   return connection

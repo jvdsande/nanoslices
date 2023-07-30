@@ -1,20 +1,18 @@
-import { computed } from 'nanostores'
 import { createSlice } from '@nanoslices/core'
 
 import { tasks } from './tasks'
 
-export const statistics = createSlice(() => ({}))
-  .slices({ tasks })
-  .computed((_, { slices }) => ({
-    total: computed(slices.tasks.flat, (flat) => flat.length),
+export const statistics = createSlice({ store: { tasks }})
+  .computed(({ store, computed }) => ({
+    total: computed(() => [store.tasks.flat], (flat) => flat.length),
     done: computed(
-      slices.tasks.flat,
+      () => [store.tasks.flat],
       (flat) => flat.filter((task) => task.done).length,
     ),
   }))
-  .computed((slice) => ({
+  .computed(({ slice, computed }) => ({
     progress: computed(
-      [slice.total, slice.done],
+      () => [slice.total, slice.done],
       (total, done) => Math.round(done * 100) / (total || 1),
     ),
   }))

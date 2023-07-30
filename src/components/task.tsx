@@ -1,48 +1,55 @@
+import { memo } from 'react'
 import { Checkbox, CloseButton, Group, Text, TextInput } from '@mantine/core'
 import { Store } from '../store'
 
-export function Task(props: { id: number; name: string; done?: boolean }) {
+export const Task = memo((props: { taskId: string }) => {
+  const task = Store.use((store) => store.tasks.tasks, { keys: [props.taskId] })[props.taskId]
+  const [renameTask, toggleTask, deleteTask] = Store.act((store) => [
+    store.tasks.renameTask,
+    store.tasks.toggleTask,
+    store.tasks.deleteTask
+  ])
+
+  if (!task)
+    return null
+
   return (
     <Group
       h={48}
       p={8}
       pt={0}
       mt={-8}
-      style={{ borderBottom: '1px solid #0001' }}
-    >
-      {!props.done && (
+      style={{ borderBottom: '1px solid #0001' }}>
+      {!task.done && (
         <TextInput
           style={{ flex: 1 }}
           variant="unstyled"
-          value={props.name}
+          value={task.name}
           onChange={(e) => {
-            Store.act((store) =>
-              store.tasks.renameTask(props.id, e.currentTarget.value),
-            )
+            renameTask(props.taskId, e.currentTarget.value)
           }}
         />
       )}
-      {props.done && (
+      {task.done && (
         <Text
           style={{ flex: 1 }}
           mt={1}
           px={2}
           strikethrough
           size="sm"
-          color="dimmed"
-        >
-          {props.name}
+          color="dimmed">
+          {task.name}
         </Text>
       )}
       <Checkbox
-        checked={props.done}
-        onChange={() => Store.act((store) => store.tasks.toggleTask(props.id))}
+        checked={task.done}
+        onChange={() => toggleTask(props.taskId)}
       />
       <CloseButton
         color="red"
         sx={{ color: 'gray', '&:hover': { color: 'red' } }}
-        onClick={() => Store.act((store) => store.tasks.deleteTask(props.id))}
+        onClick={() => deleteTask(props.taskId)}
       />
     </Group>
   )
-}
+})

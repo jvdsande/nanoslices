@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { expect } from 'vitest'
 import { createStore } from '@nanoslices/core'
 import '@nanoslices/spy'
 
@@ -11,9 +11,10 @@ describe('the statistic slice', () => {
     reset: beforeEach,
     snapshot: {
       tasks: {
+        keys: [1, 2],
         tasks: {
-          1: { name: 'First', done: true },
-          2: { name: 'Second', done: false }
+          1: { name: 'Task 1', done: true },
+          2: { name: 'Task 2', done: false },
         }
       }
     }
@@ -28,9 +29,10 @@ describe('the statistic slice', () => {
 
     StoreSpy.snapshot({
       tasks: {
+        keys: [1, 2],
         tasks: {
-          1: { name: 'First', done: true },
-          2: { name: 'Second', done: true }
+          1: { name: 'Task 1', done: true },
+          2: { name: 'Task 2', done: true },
         }
       }
     })
@@ -43,11 +45,12 @@ describe('the statistic slice', () => {
 
     StoreSpy.snapshot({
       tasks: {
+        keys: [1, 2, 3, 4],
         tasks: {
-          1: { name: 'First', done: true },
-          2: { name: 'Second', done: false },
-          3: { name: 'Third', done: false },
-          4: { name: 'Fourth', done: false },
+          1: { name: 'Task 1', done: true },
+          2: { name: 'Task 2', done: false },
+          3: { name: 'Task 3', done: false },
+          4: { name: 'Task 4', done: false },
         }
       }
     })

@@ -1,10 +1,14 @@
-import { describe, it, expect } from 'vitest'
+import { expect } from 'vitest'
 import { createStore } from '@nanoslices/core'
 
 import { tasks } from './tasks.ts'
 import { newTask } from './new-task.ts'
 
 describe('the newTask slice', () => {
+  beforeEach(() => {
+    window.localStorage.clear()
+  })
+
   it('should allow reading and setting a string value', () => {
     const Store = createStore({ newTask })
 
@@ -39,6 +43,19 @@ describe('the newTask slice', () => {
 
     expect(Store.get((store) => store.newTask.value)).toBe('')
     expect(Store.get((store) => store.tasks.empty)).toBe(false)
-    expect(Store.get((store) => store.tasks.flat)[0].name).toBe('hello world')
+    expect(Object.values(Store.get((store) => store.tasks.tasks))).toContainEqual({
+      name: 'hello world',
+      done: false
+    })
+  })
+
+  it('should block the submit action execution if the value is currently empty', () => {
+    const Store = createStore({ newTask, tasks })
+
+    expect(Store.get((store) => store.tasks.empty)).toBe(true)
+
+    Store.act((store) => store.newTask.submit())
+
+    expect(Store.get((store) => store.tasks.empty)).toBe(true)
   })
 })

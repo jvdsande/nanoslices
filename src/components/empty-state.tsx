@@ -1,7 +1,7 @@
 import { Text } from '@mantine/core'
 import { Store } from '../store'
 
-export function EmptyState() {
+export const EmptyState = () => {
   const empty = Store.use((store) => store.tasks.empty)
 
   if (!empty) return null

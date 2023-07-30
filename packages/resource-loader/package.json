@@ -1,7 +1,7 @@
 {
-  "name": "@nanoslices/react",
-  "description": "React wrapper for Nanoslices",
-  "version": "0.0.0-rc.13",
+  "name": "@nanoslices/resource-loader",
+  "description": "Resource loading system for nanoslices",
+  "version": "0.0.0-rc.12",
   "repository": "https://github.com/jvdsande/nanoslices.git",
   "author": "Jérémie van der Sande <jeremie.vandersande@gmail.com>",
   "license": "MIT",
@@ -10,13 +10,12 @@
     "build": "tsc",
     "clean": "rm -rf dist"
   },
-  "dependencies": {
-    "@nanoslices/core": "^0.0.0-rc.13"
-  },
   "devDependencies": {
-    "@nanoslices/types": "0.0.0-rc.13"
+    "@nanoslices/types": "0.0.0-rc.12"
   },
   "peerDependencies": {
+    "@nanoslices/core": "^0.0.0-rc.12",
+    "@nanoslices/react": "^0.0.0-rc.12",
     "@nanostores/react": "^0.7.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
