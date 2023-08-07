@@ -1,6 +1,6 @@
 {
   "name": "@nanoslices/core",
-  "version": "0.0.0-rc.13",
+  "version": "0.0.0-rc.14",
   "description": "Centralized state management wrapper around nanostores",
   "repository": "https://github.com/jvdsande/nanoslices.git",
   "author": "Jérémie van der Sande <jeremie.vandersande@gmail.com>",
@@ -14,7 +14,7 @@
     "nanostores": "^0.9.1"
   },
   "dependencies": {
-    "@nanoslices/types": "0.0.0-rc.13"
+    "@nanoslices/types": "0.0.0-rc.14"
   },
   "devDependencies": {
     "@redux-devtools/extension": "^3.2.5"

@@ -1,7 +1,7 @@
 {
   "name": "@nanoslices/spy",
   "description": "Spy support for testing Nanoslices",
-  "version": "0.0.0-rc.13",
+  "version": "0.0.0-rc.14",
   "repository": "https://github.com/jvdsande/nanoslices.git",
   "author": "Jérémie van der Sande <jeremie.vandersande@gmail.com>",
   "license": "MIT",
@@ -11,10 +11,10 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@nanoslices/core": "^0.0.0-rc.13"
+    "@nanoslices/core": "^0.0.0-rc.14"
   },
   "devDependencies": {
-    "@nanoslices/types": "0.0.0-rc.13"
+    "@nanoslices/types": "0.0.0-rc.14"
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

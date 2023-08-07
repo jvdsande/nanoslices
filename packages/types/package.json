@@ -1,6 +1,6 @@
 {
   "name": "@nanoslices/types",
-  "version": "0.0.0-rc.13",
+  "version": "0.0.0-rc.14",
   "description": "Shared types across the Nanoslices packages",
   "repository": "https://github.com/jvdsande/nanoslices.git",
   "author": "Jérémie van der Sande <jeremie.vandersande@gmail.com>",

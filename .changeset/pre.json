@@ -6,11 +6,13 @@
     "@nanoslices/devtools": "0.0.0-rc.10",
     "@nanoslices/react": "0.0.0-rc.10",
     "@nanoslices/spy": "0.0.0-rc.10",
-    "@nanoslices/types": "0.0.0-rc.10"
+    "@nanoslices/types": "0.0.0-rc.10",
+    "@nanoslices/resource-loader": "0.0.0-rc.13"
   },
   "changesets": [
     "dull-cups-occur",
     "eleven-crabs-mix",
-    "five-shirts-share"
+    "five-shirts-share",
+    "funny-ligers-shout"
   ]
 }
